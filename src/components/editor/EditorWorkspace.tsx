@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, Download, Sparkles } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { Badge, Button } from "@/components/ui";
 import { ProviderStatusChip } from "@/components/providers/ProviderStatusChip";
@@ -10,6 +10,7 @@ import { EditableTitle } from "./EditableTitle";
 import { ScenePreview } from "./ScenePreview";
 import { SceneInspector } from "./SceneInspector";
 import { SceneStrip } from "./SceneStrip";
+import { ExportModal } from "./ExportModal";
 import type { Storyboard } from "@/lib/types";
 import { useLunaStore } from "@/lib/store";
 import { useGeneration } from "@/lib/useGeneration";
@@ -23,6 +24,7 @@ export function EditorWorkspace({ storyboard }: { storyboard: Storyboard }) {
   const updateStoryboard = useLunaStore((s) => s.updateStoryboard);
   const { generateScene, generateAll, busy } = useGeneration(storyboard);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const selectedScene =
     storyboard.scenes.find((s) => s.id === selectedId) ?? storyboard.scenes[0] ?? null;
@@ -54,6 +56,15 @@ export function EditorWorkspace({ storyboard }: { storyboard: Storyboard }) {
             <ProviderStatusChip />
             <Button
               size="sm"
+              variant="secondary"
+              onClick={() => setExportOpen(true)}
+              disabled={storyboard.scenes.length === 0}
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Export</span>
+            </Button>
+            <Button
+              size="sm"
               onClick={() => generateAll(storyboard.scenes)}
               loading={busy}
               disabled={storyboard.scenes.length === 0}
@@ -64,6 +75,10 @@ export function EditorWorkspace({ storyboard }: { storyboard: Storyboard }) {
           </>
         }
       />
+
+      {exportOpen && (
+        <ExportModal onClose={() => setExportOpen(false)} storyboard={storyboard} />
+      )}
 
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
