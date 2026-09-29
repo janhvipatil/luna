@@ -3,12 +3,16 @@ import { generate, resolveProvider } from "@/lib/providers";
 import { ProviderNotConfiguredError } from "@/lib/providers/types";
 import type { GenerationRequest } from "@/lib/providers";
 import type { AspectRatio, SceneMedium, VisualStyle } from "@/lib/types";
+import { createClient } from "@/lib/supabase/server";
+import { storeAsset } from "@/lib/data/storeAsset";
 
 const VALID_ASPECTS: AspectRatio[] = ["9:16", "1:1", "16:9", "4:5"];
 const VALID_MEDIA: SceneMedium[] = ["image", "video"];
 
 interface Body extends Partial<GenerationRequest> {
   providerId?: string;
+  storyboardId?: string;
+  sceneId?: string;
 }
 
 /**
@@ -24,7 +28,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const { prompt, style, medium, aspect, sceneTitle, seed, providerId } = body;
+  const { prompt, style, medium, aspect, sceneTitle, seed, providerId, storyboardId, sceneId } =
+    body;
 
   if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
     return NextResponse.json({ error: "A prompt is required." }, { status: 400 });
@@ -49,7 +54,35 @@ export async function POST(request: Request) {
     const result = await generate(providerId, req);
     // Report which provider actually ran, in case of fallback.
     const resolved = resolveProvider(providerId, req);
-    return NextResponse.json({ ...result, resolvedProviderId: resolved.id });
+
+    // Re-host the asset in Supabase Storage so it survives (provider URLs can
+    // expire) and doesn't bloat the storyboard row. Best-effort: if storage
+    // fails, fall back to the provider URL so generation still succeeds.
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    let url = result.url;
+    let posterUrl = result.posterUrl;
+    if (user) {
+      try {
+        url = await storeAsset(supabase, user.id, { url: result.url, storyboardId, sceneId });
+        if (posterUrl && posterUrl !== result.url) {
+          posterUrl = await storeAsset(supabase, user.id, {
+            url: posterUrl,
+            storyboardId,
+            sceneId: sceneId ? `${sceneId}-poster` : undefined,
+          });
+        } else if (posterUrl) {
+          posterUrl = url;
+        }
+      } catch (storageErr) {
+        console.error("Asset storage failed, using provider URL:", storageErr);
+      }
+    }
+
+    return NextResponse.json({ ...result, url, posterUrl, resolvedProviderId: resolved.id });
   } catch (err) {
     if (err instanceof ProviderNotConfiguredError) {
       return NextResponse.json({ error: err.message }, { status: 422 });

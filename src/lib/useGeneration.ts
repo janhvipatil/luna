@@ -34,6 +34,8 @@ export function useGeneration(storyboard: Storyboard) {
             aspect: storyboard.format,
             sceneTitle: scene.title,
             providerId,
+            storyboardId: storyboard.id,
+            sceneId: scene.id,
           }),
         });
         const data: GenerateResponse = await res.json();
