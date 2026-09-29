@@ -1,36 +1,135 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌙 Luna
 
-## Getting Started
+**Storyboard-first short-form content creation.**
 
-First, run the development server:
+Luna is the UI layer over the AI models you already use. Instead of building yet
+another video editor or training a model, Luna gives you a fast, polished
+workflow to **draft a storyboard, write the script, choose a look, and generate
+every scene** with the open-source backend of your choice.
+
+The bet: the models are commoditized — the missing piece is a delightful,
+opinionated interface that turns them into a real creative tool. That interface
+is the whole product.
+
+---
+
+## What's in the box
+
+- **Dashboard** — a library of your storyboards plus starter templates
+  (Product Launch, Founder Story, 60-Second Explainer).
+- **Storyboard editor** — a scene-by-scene canvas with:
+  - drag-to-reorder timeline,
+  - per-scene visual prompt, script/caption, look, output type (image/video),
+    and duration,
+  - live preview with the script rendered as an on-screen caption,
+  - one-click **Generate scene** and **Generate all**.
+- **Pluggable generation backends** — swap the model without touching the UI.
+- **Local-first** — storyboards are saved to your browser (localStorage). No
+  account, no server database, instantly usable.
+
+---
+
+## Getting started
+
+Luna targets **Node ≥ 20.9** (Next.js 16 requirement). An `.nvmrc` is included:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+nvm use          # picks up Node 22 from .nvmrc
+npm install
+npm run dev      # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+It runs immediately using the built-in **Luna Preview** provider, which returns
+styled placeholder frames so you can design flow and copy before wiring a real
+model.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Production build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build    # uses the webpack builder (see note below)
+npm start
+```
 
-## Learn More
+> **Note on the build.** `npm run build` uses `next build --webpack`. In this
+> repo's environment, Turbopack's production-build worker fails to resolve
+> Tailwind v4's native `@tailwindcss/oxide` binary from its bundle sandbox,
+> while both the webpack build and Turbopack **dev** (`npm run dev`) work
+> perfectly. `npm run build:turbopack` is kept so you can retry the Turbopack
+> build as that issue is resolved upstream.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Connecting a real backend
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Luna ships with three providers (see [`src/lib/providers`](src/lib/providers)):
 
-## Deploy on Vercel
+| Provider          | Kind                         | Configure with                          |
+| ----------------- | ---------------------------- | --------------------------------------- |
+| **Luna Preview**  | Built-in placeholder         | _nothing — always on_                   |
+| **Replicate**     | Hosted open models           | `REPLICATE_API_TOKEN`                   |
+| **ComfyUI**       | Self-hosted node-graph engine| `COMFYUI_URL` (+ a workflow)            |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Copy `.env.example` to `.env.local` and fill in the keys for the backend you
+   want.
+2. Restart the dev server.
+3. Open the **backend chip** in the app header and select your provider — it
+   shows "Connected" once its config is detected.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Adding your own provider
+
+A provider is a thin adapter — implement the `Provider` interface and register
+it. Nothing else in the app needs to change:
+
+```ts
+// src/lib/providers/types.ts
+export interface Provider {
+  id: string;
+  name: string;
+  description: string;
+  capabilities: { image: boolean; video: boolean };
+  isConfigured(): boolean;
+  generate(req: GenerationRequest): Promise<GenerationResult>;
+}
+```
+
+Add it to the registry in [`src/lib/providers/index.ts`](src/lib/providers/index.ts).
+`buildStyledPrompt()` in `providers/prompt.ts` gives you consistent, style-aware
+prompts across every backend.
+
+---
+
+## Architecture
+
+```
+src/
+  app/
+    page.tsx                 Dashboard (storyboard library)
+    storyboard/[id]/page.tsx Editor route
+    api/generate/route.ts    Generation endpoint → provider layer
+    api/providers/route.ts   Provider metadata (server-computed config status)
+  components/
+    dashboard/               Library, templates, new-storyboard flow
+    editor/                  Preview, inspector, drag-sortable timeline
+    providers/               Backend picker + status chip
+    ui/                      Design-system primitives
+  lib/
+    store.ts                 Zustand + localStorage (all app state)
+    providers/               Pluggable generation backends
+    types.ts, constants.ts   Domain model + presets/templates
+```
+
+**Data flow:** the client store holds storyboards and the chosen provider id. A
+generate action calls `/api/generate`, which resolves the right provider on the
+server (honoring your choice, falling back to a configured one, and finally to
+the always-available preview), runs it, and returns a normalized asset that the
+store writes back onto the scene.
+
+---
+
+## Roadmap ideas
+
+- Timeline assembly / export (stitch scenes into a single clip via an existing
+  open tool like ffmpeg or Remotion).
+- Cloud sync + sharing (the store is already isolated behind a clean interface).
+- Per-scene variations and a "pick the best" gallery.
+- Voiceover generation as another provider capability.
