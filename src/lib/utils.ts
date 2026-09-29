@@ -6,11 +6,25 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Short, collision-resistant id for client-created entities. */
+/** Short, collision-resistant id for client-created entities (scene ids, etc.). */
 export function createId(prefix = "id"): string {
   const rand = Math.random().toString(36).slice(2, 8);
   const time = Date.now().toString(36).slice(-4);
   return `${prefix}_${time}${rand}`;
+}
+
+/**
+ * RFC-4122 UUID for entities that map to a Postgres `uuid` column (storyboard
+ * ids). Falls back to a manual v4 if crypto.randomUUID is unavailable.
+ */
+export function createUuid(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => {
+    const n = Number(c);
+    return (n ^ (Math.floor(Math.random() * 256) & (15 >> (n / 4)))).toString(16);
+  });
 }
 
 /** e.g. "2m ago", "3h ago", "just now" */

@@ -6,7 +6,6 @@ import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/ui";
 import { EditorWorkspace } from "./EditorWorkspace";
 import { useLunaStore } from "@/lib/store";
-import { useMounted } from "@/lib/useMounted";
 
 /**
  * Loads a storyboard by id and handles the not-found / not-yet-hydrated states.
@@ -14,10 +13,10 @@ import { useMounted } from "@/lib/useMounted";
  * are delegated to EditorWorkspace so those hooks never sit behind a return.
  */
 export function Editor({ storyboardId }: { storyboardId: string }) {
-  const mounted = useMounted();
+  const hydrated = useLunaStore((s) => s.hydrated);
   const storyboard = useLunaStore((s) => s.storyboards[storyboardId]);
 
-  if (!mounted) {
+  if (!hydrated) {
     return (
       <>
         <AppHeader />

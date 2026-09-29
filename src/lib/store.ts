@@ -1,7 +1,6 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import type {
   AspectRatio,
   GeneratedAsset,
@@ -12,19 +11,27 @@ import type {
   VisualStyle,
 } from "./types";
 import { DEFAULT_SCENE_PROMPT } from "./constants";
-import { createId } from "./utils";
+import { createId, createUuid } from "./utils";
 
 /**
- * Client-side application state, persisted to localStorage. Luna is local-first
- * by design — a user's storyboards live in their browser and generation is the
- * only thing that hits the network. This keeps the tool instantly usable with
- * zero backend/auth setup while leaving room to sync later.
+ * Client-side application state — the source of truth the UI renders from.
+ *
+ * Data is owned per-user in Supabase (see lib/data). This store is hydrated
+ * from the server on load and mirrored back by the StoreSync reconciler, so the
+ * editor stays snappy (local mutations) while every change is persisted.
  */
 
 interface LunaState {
   storyboards: Record<string, Storyboard>;
+  /** True once the initial server fetch has populated the store. */
+  hydrated: boolean;
   /** Preferred generation provider id (see lib/providers). */
   providerId: string;
+
+  /** Replace all storyboards with server data (initial load / re-fetch). */
+  hydrate: (storyboards: Storyboard[]) => void;
+  /** Clear all state (on sign-out). */
+  reset: () => void;
 
   // Storyboard CRUD
   createStoryboard: (input: { title: string; description?: string; format: AspectRatio }) => string;
@@ -73,14 +80,21 @@ function withStoryboard(
   return { storyboards: { ...state.storyboards, [id]: next } };
 }
 
-export const useLunaStore = create<LunaState>()(
-  persist(
-    (set, get) => ({
+export const useLunaStore = create<LunaState>()((set, get) => ({
       storyboards: {},
+      hydrated: false,
       providerId: "mock",
 
+      hydrate: (list) =>
+        set({
+          storyboards: Object.fromEntries(list.map((sb) => [sb.id, sb])),
+          hydrated: true,
+        }),
+
+      reset: () => set({ storyboards: {}, hydrated: false }),
+
       createStoryboard: ({ title, description = "", format }) => {
-        const id = createId("sb");
+        const id = createUuid();
         const now = Date.now();
         const sb: Storyboard = {
           id,
@@ -96,7 +110,7 @@ export const useLunaStore = create<LunaState>()(
       },
 
       createFromTemplate: (template, titleOverride) => {
-        const id = createId("sb");
+        const id = createUuid();
         const now = Date.now();
         const sb: Storyboard = {
           id,
@@ -124,7 +138,7 @@ export const useLunaStore = create<LunaState>()(
       duplicateStoryboard: (id) => {
         const source = get().storyboards[id];
         if (!source) return undefined;
-        const newId = createId("sb");
+        const newId = createUuid();
         const now = Date.now();
         const copy: Storyboard = {
           ...source,
@@ -209,15 +223,13 @@ export const useLunaStore = create<LunaState>()(
         ),
 
       setProviderId: (id) => set({ providerId: id }),
-    }),
-    {
-      name: "luna-store-v1",
-      version: 1,
-    },
-  ),
-);
+}));
 
-/** Selector helpers. */
-export function selectStoryboardList(state: LunaState): Storyboard[] {
-  return Object.values(state.storyboards).sort((a, b) => b.updatedAt - a.updatedAt);
+/**
+ * Sort storyboards newest-first. Not a hook selector — it allocates a new array
+ * each call, so pass `state.storyboards` through `useMemo` in the component
+ * rather than handing this to `useLunaStore` directly.
+ */
+export function sortStoryboards(map: Record<string, Storyboard>): Storyboard[] {
+  return Object.values(map).sort((a, b) => b.updatedAt - a.updatedAt);
 }

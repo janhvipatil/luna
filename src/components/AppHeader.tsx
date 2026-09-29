@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./brand/Logo";
+import { UserMenu } from "./UserMenu";
 import { cn } from "@/lib/utils";
 
 /**
@@ -31,7 +32,10 @@ export function AppHeader({
           <div className="flex min-w-0 items-center gap-2">{left}</div>
         </>
       )}
-      <div className="ml-auto flex items-center gap-2">{right}</div>
+      <div className="ml-auto flex items-center gap-2">
+        {right}
+        <UserMenu />
+      </div>
     </header>
   );
 }

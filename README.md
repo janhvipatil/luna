@@ -24,8 +24,9 @@ is the whole product.
   - live preview with the script rendered as an on-screen caption,
   - one-click **Generate scene** and **Generate all**.
 - **Pluggable generation backends** — swap the model without touching the UI.
-- **Local-first** — storyboards are saved to your browser (localStorage). No
-  account, no server database, instantly usable.
+- **Accounts & sync** — email/password auth via Supabase; each user's
+  storyboards are persisted per-user in Postgres with row-level security, plus a
+  profile section and a members directory.
 
 ---
 
@@ -36,12 +37,33 @@ Luna targets **Node ≥ 20.9** (Next.js 16 requirement). An `.nvmrc` is included
 ```bash
 nvm use          # picks up Node 22 from .nvmrc
 npm install
-npm run dev      # http://localhost:3000
+cp .env.example .env.local   # then fill in the Supabase values below
+npm run dev                  # http://localhost:3000
 ```
 
-It runs immediately using the built-in **Luna Preview** provider, which returns
-styled placeholder frames so you can design flow and copy before wiring a real
-model.
+Generation runs immediately on the built-in **Luna Preview** provider (styled
+placeholder frames, no keys), so you can design flow and copy before wiring a
+real model.
+
+### Auth & database (Supabase)
+
+Luna uses Supabase for authentication and per-user storyboard storage. Set:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
+```
+
+The schema (`profiles`, `storyboards`) and its row-level-security policies live
+in `supabase/migrations`. Auth is email/password; sessions are refreshed in
+`src/proxy.ts` (Next.js 16's renamed middleware) and every route except the auth
+screens requires a session.
+
+> **Email confirmation:** by default Supabase requires new users to confirm
+> their email before they can sign in. For frictionless local testing you can
+> turn this off at **Authentication → Providers → Email → "Confirm email"** in
+> the Supabase dashboard. For production with confirmation on, add your deployed
+> URL under **Authentication → URL Configuration → Redirect URLs**.
 
 ### Production build
 

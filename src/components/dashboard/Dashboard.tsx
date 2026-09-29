@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Moon, Plus, Sparkles } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
@@ -8,14 +8,19 @@ import { Button, Card } from "@/components/ui";
 import { NewStoryboardModal } from "./NewStoryboardModal";
 import { StoryboardCard } from "./StoryboardCard";
 import { ProviderStatusChip } from "@/components/providers/ProviderStatusChip";
-import { selectStoryboardList, useLunaStore } from "@/lib/store";
+import { sortStoryboards, useLunaStore } from "@/lib/store";
 import { TEMPLATES } from "@/lib/constants";
-import { useMounted } from "@/lib/useMounted";
+import { displayName, useUser } from "@/lib/data/UserContext";
 
 export function Dashboard() {
-  const mounted = useMounted();
+  const hydrated = useLunaStore((s) => s.hydrated);
+  const user = useUser();
   const router = useRouter();
-  const storyboards = useLunaStore(selectStoryboardList);
+  // Select the stable record and derive the sorted list here — sorting inside
+  // the store selector returns a new array each call, which trips
+  // useSyncExternalStore's snapshot check.
+  const storyboardsMap = useLunaStore((s) => s.storyboards);
+  const storyboards = useMemo(() => sortStoryboards(storyboardsMap), [storyboardsMap]);
   const createFromTemplate = useLunaStore((s) => s.createFromTemplate);
   const [newOpen, setNewOpen] = useState(false);
 
@@ -44,7 +49,7 @@ export function Dashboard() {
         <section className="mb-10">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface/60 px-3 py-1 text-xs text-muted-strong">
             <Sparkles className="h-3.5 w-3.5 text-accent-strong" />
-            Storyboard-first content creation
+            Welcome back, {displayName(user)}
           </div>
           <h1 className="mt-4 max-w-2xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
             Turn an idea into short-form video, one scene at a time.
@@ -91,7 +96,7 @@ export function Dashboard() {
         <section>
           <h2 className="mb-3 text-sm font-medium text-muted-strong">Your storyboards</h2>
 
-          {!mounted ? (
+          {!hydrated ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[0, 1, 2].map((i) => (
                 <div key={i} className="h-56 rounded-xl luna-shimmer" />
