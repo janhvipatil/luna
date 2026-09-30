@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Pause, Play, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
 import type { Storyboard } from "@/lib/types";
 import { AspectFrame } from "@/components/AspectFrame";
+import { BrandCaption, LogoWatermark } from "./BrandOverlay";
 import { isVideoUrl } from "@/lib/utils";
 import { useSpeech } from "@/lib/useSpeech";
 import { cn } from "@/lib/utils";
@@ -78,13 +79,8 @@ export function PreviewPlayer({
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-accent/30 to-surface-3" />
           )}
-          {scene?.script && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4 pt-10">
-              <p className="text-center text-sm font-semibold leading-snug text-white drop-shadow">
-                {scene.script}
-              </p>
-            </div>
-          )}
+          {scene && <LogoWatermark />}
+          {scene?.script && <BrandCaption text={scene.script} />}
           {atEnd && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm text-white/80">
               End of reel

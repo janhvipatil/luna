@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from "react";
 import type { ProfileRow } from "@/lib/supabase/types";
+import { parseBrandKit, type BrandKit } from "@/lib/brand";
 
 export interface SessionUser {
   id: string;
@@ -30,6 +31,12 @@ export function useUser(): UserContextValue {
   const ctx = useContext(UserContext);
   if (!ctx) throw new Error("useUser must be used within the authenticated app layout");
   return ctx;
+}
+
+/** The signed-in user's brand kit (empty object if none set). */
+export function useBrandKit(): BrandKit {
+  const ctx = useContext(UserContext);
+  return parseBrandKit(ctx?.profile?.brand_kit);
 }
 
 /** Best display name: profile name → email local-part. */

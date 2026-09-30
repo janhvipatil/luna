@@ -5,6 +5,7 @@ import type { Scene, Storyboard } from "@/lib/types";
 import { Button } from "@/components/ui";
 import { AspectFrame } from "@/components/AspectFrame";
 import { StatusOverlay } from "./StatusOverlay";
+import { BrandCaption, LogoWatermark } from "./BrandOverlay";
 import { isVideoUrl } from "@/lib/utils";
 
 /**
@@ -43,14 +44,9 @@ export function ScenePreview({
           ) : null}
           <StatusOverlay status={scene.status} error={scene.error} />
 
-          {/* Script caption overlay, mimicking on-screen text. */}
-          {scene.script && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4 pt-10">
-              <p className="text-center text-sm font-semibold leading-snug text-white drop-shadow">
-                {scene.script}
-              </p>
-            </div>
-          )}
+          {/* Brand logo watermark + script caption, mimicking on-screen text. */}
+          <LogoWatermark />
+          <BrandCaption text={scene.script} />
         </AspectFrame>
       </div>
 

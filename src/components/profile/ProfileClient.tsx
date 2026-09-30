@@ -6,8 +6,10 @@ import { ArrowLeft, Check, AlertCircle } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { Avatar } from "@/components/Avatar";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
-import { displayName, useUser } from "@/lib/data/UserContext";
+import { displayName, useBrandKit, useUser } from "@/lib/data/UserContext";
+import { BRAND_FONTS } from "@/lib/brand";
 import {
+  updateBrandKit,
   updatePassword,
   updateProfile,
   type ProfileFormState,
@@ -41,7 +43,12 @@ export function ProfileClient() {
     updatePassword,
     {},
   );
+  const [brandState, brandAction, savingBrand] = useActionState<ProfileFormState, FormData>(
+    updateBrandKit,
+    {},
+  );
 
+  const brand = useBrandKit();
   const [avatarUrl, setAvatarUrl] = useState(ctx.profile?.avatar_url ?? "");
   const name = displayName(ctx);
 
@@ -112,6 +119,61 @@ export function ProfileClient() {
             <div className="flex justify-end">
               <Button type="submit" loading={savingProfile}>
                 Save profile
+              </Button>
+            </div>
+          </form>
+        </Card>
+
+        {/* Brand kit */}
+        <Card className="mb-5 p-5">
+          <h2 className="mb-1 text-sm font-medium text-muted-strong">Brand kit</h2>
+          <p className="mb-4 text-xs text-muted">
+            Applied to scene captions and exports across your storyboards.
+          </p>
+          <form action={brandAction} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="color">Accent color</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="color"
+                    name="color"
+                    type="color"
+                    defaultValue={brand.color ?? "#8b5cf6"}
+                    className="h-9 w-12 cursor-pointer rounded-lg border border-border bg-surface-2"
+                  />
+                  <span className="text-xs text-muted">Captions &amp; highlights</span>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="font">Caption font</Label>
+                <select
+                  id="font"
+                  name="font"
+                  defaultValue={brand.font ?? "sans"}
+                  className="h-9 w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
+                >
+                  {BRAND_FONTS.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="logoUrl">Logo URL (optional)</Label>
+              <Input
+                id="logoUrl"
+                name="logoUrl"
+                defaultValue={brand.logoUrl ?? ""}
+                placeholder="https://…/logo.png — shown as a watermark"
+              />
+            </div>
+            <Feedback state={brandState} />
+            <div className="flex justify-end">
+              <Button type="submit" loading={savingBrand}>
+                Save brand kit
               </Button>
             </div>
           </form>

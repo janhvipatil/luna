@@ -7,6 +7,7 @@ import { Button } from "@/components/ui";
 import type { Storyboard } from "@/lib/types";
 import { FORMAT_PRESETS } from "@/lib/constants";
 import { formatDuration } from "@/lib/utils";
+import { useBrandKit } from "@/lib/data/UserContext";
 import { downloadBlob, renderStoryboardVideo, type RenderResult } from "@/lib/export/renderVideo";
 
 type Phase = "idle" | "rendering" | "done" | "error";
@@ -31,6 +32,7 @@ export function ExportModal({
   const [error, setError] = useState<string>();
   const [result, setResult] = useState<RenderResult | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const brand = useBrandKit();
 
   const preset = FORMAT_PRESETS[storyboard.format];
   const totalDuration = storyboard.scenes.reduce((sum, s) => sum + s.durationSec, 0);
@@ -50,6 +52,7 @@ export function ExportModal({
       const res = await renderStoryboardVideo(storyboard, {
         onProgress: setProgress,
         maxDimension: 720,
+        brand,
       });
       setPreviewUrl(URL.createObjectURL(res.blob));
       setResult(res);

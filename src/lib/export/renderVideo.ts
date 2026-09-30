@@ -1,5 +1,12 @@
 import type { Scene, Storyboard } from "@/lib/types";
 import { FORMAT_PRESETS } from "@/lib/constants";
+import type { BrandKit } from "@/lib/brand";
+
+function canvasFont(font: BrandKit["font"]): string {
+  if (font === "serif") return "Georgia, serif";
+  if (font === "mono") return "ui-monospace, monospace";
+  return "ui-sans-serif, system-ui, sans-serif";
+}
 
 /**
  * Renders a storyboard into a video entirely in the browser.
@@ -17,6 +24,8 @@ export interface RenderOptions {
   /** Longest edge of the output in px (keeps exports fast). */
   maxDimension?: number;
   fps?: number;
+  /** Brand styling applied to captions and a logo watermark. */
+  brand?: BrandKit;
 }
 
 export interface RenderResult {
@@ -91,6 +100,8 @@ function drawScene(
   h: number,
   scene: Scene,
   img: HTMLImageElement | null,
+  brand: BrandKit,
+  logo: HTMLImageElement | null,
 ) {
   // Background.
   ctx.fillStyle = "#0a0a0f";
@@ -107,12 +118,21 @@ function drawScene(
     ctx.fillRect(0, 0, w, h);
   }
 
+  // Brand logo watermark, top-left.
+  if (logo) {
+    const lw = Math.round(w * 0.16);
+    const lh = (logo.height / logo.width) * lw;
+    ctx.globalAlpha = 0.9;
+    ctx.drawImage(logo, Math.round(w * 0.05), Math.round(w * 0.05), lw, lh);
+    ctx.globalAlpha = 1;
+  }
+
   // Caption (script) at the bottom with a legibility scrim.
   const script = scene.script?.trim();
   if (script) {
     const pad = Math.round(w * 0.06);
     const fontSize = Math.round(w * 0.05);
-    ctx.font = `600 ${fontSize}px ui-sans-serif, system-ui, sans-serif`;
+    ctx.font = `600 ${fontSize}px ${canvasFont(brand.font)}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
 
@@ -126,7 +146,7 @@ function drawScene(
     ctx.fillStyle = scrim;
     ctx.fillRect(0, h - blockHeight - pad * 2.5, w, blockHeight + pad * 2.5);
 
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = brand.color ?? "#ffffff";
     ctx.shadowColor = "rgba(0,0,0,0.5)";
     ctx.shadowBlur = 8;
     lines.forEach((ln, i) => {
@@ -139,7 +159,7 @@ function drawScene(
 
 export async function renderStoryboardVideo(
   storyboard: Storyboard,
-  { onProgress, maxDimension = 720, fps = 30 }: RenderOptions = {},
+  { onProgress, maxDimension = 720, fps = 30, brand = {} }: RenderOptions = {},
 ): Promise<RenderResult> {
   const scenes = storyboard.scenes.filter((s) => s.durationSec > 0);
   if (scenes.length === 0) throw new Error("This storyboard has no scenes to export.");
@@ -155,8 +175,9 @@ export async function renderStoryboardVideo(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas is not supported in this browser.");
 
-  // Preload every scene's image up front so playback is smooth.
+  // Preload every scene's image (and the brand logo) up front.
   const images = await Promise.all(scenes.map((s) => (s.asset ? loadImage(s.asset.url) : null)));
+  const logo = brand.logoUrl ? await loadImage(brand.logoUrl) : null;
 
   const { mimeType, extension } = pickMimeType();
   const stream = canvas.captureStream(fps);
@@ -170,7 +191,7 @@ export async function renderStoryboardVideo(
   });
 
   // Draw the first frame before starting so we never record a blank frame.
-  drawScene(ctx, w, h, scenes[0], images[0]);
+  drawScene(ctx, w, h, scenes[0], images[0], brand, logo);
   recorder.start();
 
   const totalMs = scenes.reduce((sum, s) => sum + s.durationSec, 0) * 1000;
@@ -193,7 +214,7 @@ export async function renderStoryboardVideo(
         }
         acc += d;
       }
-      drawScene(ctx, w, h, scenes[idx], images[idx]);
+      drawScene(ctx, w, h, scenes[idx], images[idx], brand, logo);
       onProgress?.(Math.min(0.99, elapsed / totalMs));
       requestAnimationFrame(frame);
     };

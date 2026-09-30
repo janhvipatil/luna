@@ -39,6 +39,38 @@ export async function updateProfile(
   return { ok: true, message: "Profile saved." };
 }
 
+export async function updateBrandKit(
+  _prev: ProfileFormState,
+  formData: FormData,
+): Promise<ProfileFormState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You're signed out." };
+
+  const color = String(formData.get("color") ?? "").trim();
+  const fontRaw = String(formData.get("font") ?? "").trim();
+  const logoUrl = String(formData.get("logoUrl") ?? "").trim();
+  const font = ["sans", "serif", "mono"].includes(fontRaw) ? fontRaw : undefined;
+
+  const brand_kit = {
+    ...(color ? { color } : {}),
+    ...(font ? { font } : {}),
+    ...(logoUrl ? { logoUrl } : {}),
+  };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ brand_kit: Object.keys(brand_kit).length ? brand_kit : null })
+    .eq("id", user.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/profile");
+  return { ok: true, message: "Brand kit saved." };
+}
+
 export async function updatePassword(
   _prev: ProfileFormState,
   formData: FormData,
