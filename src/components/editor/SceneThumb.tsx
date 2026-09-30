@@ -49,8 +49,14 @@ export function SceneThumb({
       >
         <AspectFrame ratio={ratio} className="w-full">
           {scene.asset ? (
+            // Thumbnails stay lightweight: show the poster (or the frame) as an
+            // image even for video assets.
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={scene.asset.url} alt={scene.title} className="h-full w-full object-cover" />
+            <img
+              src={scene.asset.posterUrl ?? scene.asset.url}
+              alt={scene.title}
+              className="h-full w-full object-cover"
+            />
           ) : null}
           <StatusOverlay status={scene.status} error={scene.error} compact />
           {scene.medium === "video" && scene.status === "ready" && (

@@ -6,6 +6,10 @@ import type { AspectRatio, SceneMedium, VisualStyle } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 import { storeAsset } from "@/lib/data/storeAsset";
 
+// Video generations can run for minutes; allow the function room to finish.
+// (On Vercel this requires Fluid compute, which is on by default.)
+export const maxDuration = 300;
+
 const VALID_ASPECTS: AspectRatio[] = ["9:16", "1:1", "16:9", "4:5"];
 const VALID_MEDIA: SceneMedium[] = ["image", "video"];
 

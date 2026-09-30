@@ -5,6 +5,7 @@ import type { Scene, Storyboard } from "@/lib/types";
 import { Button } from "@/components/ui";
 import { AspectFrame } from "@/components/AspectFrame";
 import { StatusOverlay } from "./StatusOverlay";
+import { isVideoUrl } from "@/lib/utils";
 
 /**
  * The large canvas: a full-size preview of the selected scene with its script
@@ -27,12 +28,18 @@ export function ScenePreview({
       <div className="w-full max-w-[min(46vh,420px)]">
         <AspectFrame ratio={storyboard.format} className="w-full shadow-2xl">
           {scene.asset ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={scene.asset.url}
-              alt={scene.title}
-              className="h-full w-full object-cover"
-            />
+            isVideoUrl(scene.asset.url) ? (
+              <video
+                src={scene.asset.url}
+                poster={scene.asset.posterUrl}
+                controls
+                loop
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={scene.asset.url} alt={scene.title} className="h-full w-full object-cover" />
+            )
           ) : null}
           <StatusOverlay status={scene.status} error={scene.error} />
 

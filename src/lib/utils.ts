@@ -40,6 +40,11 @@ export function timeAgo(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString();
 }
 
+/** Whether an asset URL points at a real video file (vs an image/poster). */
+export function isVideoUrl(url: string): boolean {
+  return /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url) || url.startsWith("data:video");
+}
+
 /** Total storyboard runtime in seconds, formatted as m:ss. */
 export function formatDuration(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);

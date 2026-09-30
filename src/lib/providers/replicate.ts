@@ -3,13 +3,16 @@ import { ProviderNotConfiguredError } from "./types";
 import { buildStyledPrompt } from "./prompt";
 
 /**
- * Replicate adapter (skeleton).
+ * Replicate adapter.
  *
  * Replicate hosts thousands of open-source models behind one API — e.g.
- * `black-forest-labs/flux-schnell` for images and a range of open video models.
- * This adapter is intentionally minimal and self-contained: it becomes live the
- * moment REPLICATE_API_TOKEN is set. Model slugs are overridable via env so you
- * can point Luna at whichever open model you prefer without code changes.
+ * `black-forest-labs/flux-schnell` for images and open video models. It becomes
+ * live the moment REPLICATE_API_TOKEN is set. Model slugs are overridable via
+ * env so you can point Luna at whichever open model you prefer.
+ *
+ * We create a prediction and poll it to completion rather than relying on the
+ * blocking `Prefer: wait` header, because video generations routinely exceed
+ * the wait window. The route sets a generous maxDuration to accommodate this.
  *
  * @see https://replicate.com
  */
@@ -23,6 +26,24 @@ const ASPECT_TO_REPLICATE: Record<string, string> = {
   "1:1": "1:1",
   "16:9": "16:9",
 };
+
+const POLL_INTERVAL_MS = 1500;
+const MAX_POLL_MS = 240_000; // 4 min ceiling for slow video models.
+
+interface Prediction {
+  id: string;
+  status: "starting" | "processing" | "succeeded" | "failed" | "canceled";
+  output?: string | string[] | null;
+  error?: string | null;
+  urls?: { get?: string };
+}
+
+function firstUrl(output: Prediction["output"]): string | undefined {
+  if (Array.isArray(output)) return output.find((o) => typeof o === "string");
+  return typeof output === "string" ? output : undefined;
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const replicateProvider: Provider = {
   id: "replicate",
@@ -48,15 +69,15 @@ export const replicateProvider: Provider = {
       );
     }
 
-    // Replicate's "run and wait" endpoint blocks until the prediction resolves,
-    // which keeps this adapter free of polling logic.
-    const res = await fetch(`https://api.replicate.com/v1/models/${model}/predictions`, {
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+
+    // Create the prediction.
+    const createRes = await fetch(`https://api.replicate.com/v1/models/${model}/predictions`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Prefer: "wait",
-      },
+      headers,
       body: JSON.stringify({
         input: {
           prompt: buildStyledPrompt(req),
@@ -66,12 +87,33 @@ export const replicateProvider: Provider = {
       }),
     });
 
-    if (!res.ok) {
-      throw new Error(`Replicate error ${res.status}: ${await res.text()}`);
+    if (!createRes.ok) {
+      throw new Error(`Replicate error ${createRes.status}: ${await createRes.text()}`);
     }
 
-    const data = (await res.json()) as { output?: string | string[] };
-    const output = Array.isArray(data.output) ? data.output[0] : data.output;
+    let prediction = (await createRes.json()) as Prediction;
+    const pollUrl =
+      prediction.urls?.get ?? `https://api.replicate.com/v1/predictions/${prediction.id}`;
+
+    // Poll to completion.
+    const deadline = Date.now() + MAX_POLL_MS;
+    while (prediction.status === "starting" || prediction.status === "processing") {
+      if (Date.now() > deadline) {
+        throw new Error("Replicate generation timed out.");
+      }
+      await sleep(POLL_INTERVAL_MS);
+      const pollRes = await fetch(pollUrl, { headers });
+      if (!pollRes.ok) {
+        throw new Error(`Replicate poll error ${pollRes.status}: ${await pollRes.text()}`);
+      }
+      prediction = (await pollRes.json()) as Prediction;
+    }
+
+    if (prediction.status !== "succeeded") {
+      throw new Error(prediction.error || `Replicate prediction ${prediction.status}.`);
+    }
+
+    const output = firstUrl(prediction.output);
     if (!output) {
       throw new Error("Replicate returned no output.");
     }
