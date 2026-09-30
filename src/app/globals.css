@@ -1,33 +1,80 @@
 @import "tailwindcss";
 
 /*
-  Luna design system.
-  Dark-first, "moonlit" aesthetic: deep indigo-black surfaces with a
-  violet/aurora accent. Light theme is provided but the product is
-  designed to be used in dark.
+  Luna design system — shadcn-style token model.
+
+  A neutral (zinc) palette with a single violet brand accent, defined for both
+  light (default) and dark. Component classes reference these tokens
+  (bg-surface, text-muted, bg-accent, border-border, …) so switching themes is a
+  pure token swap. next-themes toggles the `.dark` class on <html>.
 */
 
 :root {
-  --background: #0a0a0f;
-  --surface: #121218;
-  --surface-2: #1a1a22;
-  --surface-3: #232330;
-  --border: #26262f;
-  --border-strong: #33333f;
-  --foreground: #ececf1;
-  --muted: #9a9aa6;
-  --muted-strong: #b8b8c4;
+  --radius: 0.625rem;
 
-  --accent: #8b5cf6;
-  --accent-strong: #a78bfa;
-  --accent-foreground: #ffffff;
-  --accent-soft: color-mix(in oklab, var(--accent) 16%, transparent);
+  /* Surfaces (light) */
+  --background: oklch(0.985 0.001 286);
+  --surface: oklch(1 0 0);
+  --surface-2: oklch(0.968 0.001 286);
+  --surface-3: oklch(0.94 0.003 286);
+  --border: oklch(0.918 0.004 286);
+  --border-strong: oklch(0.87 0.005 286);
 
-  --success: #34d399;
-  --warning: #fbbf24;
-  --danger: #f87171;
+  /* Text */
+  --foreground: oklch(0.21 0.006 286);
+  --muted: oklch(0.552 0.016 286);
+  --muted-strong: oklch(0.37 0.012 286);
 
-  --radius: 0.75rem;
+  /* Brand accent (violet) */
+  --accent: oklch(0.606 0.25 292.717);
+  --accent-strong: oklch(0.541 0.281 293);
+  --accent-foreground: oklch(1 0 0);
+  --accent-soft: color-mix(in oklab, var(--accent) 12%, transparent);
+
+  /* Semantic */
+  --success: oklch(0.58 0.13 160);
+  --warning: oklch(0.68 0.16 70);
+  --danger: oklch(0.577 0.245 27.325);
+
+  /* shadcn-compatible aliases so `npx shadcn add` components inherit the theme */
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface);
+  --popover-foreground: var(--foreground);
+  --primary: var(--accent);
+  --primary-foreground: var(--accent-foreground);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--foreground);
+  --muted-foreground: var(--muted);
+  --destructive: var(--danger);
+  --input: var(--border);
+  --ring: var(--accent);
+}
+
+.dark {
+  /* Surfaces (dark) */
+  --background: oklch(0.145 0.005 286);
+  --surface: oklch(0.19 0.006 286);
+  --surface-2: oklch(0.23 0.006 286);
+  --surface-3: oklch(0.27 0.006 286);
+  --border: oklch(1 0 0 / 10%);
+  --border-strong: oklch(1 0 0 / 16%);
+
+  /* Text */
+  --foreground: oklch(0.985 0 0);
+  --muted: oklch(0.705 0.015 286);
+  --muted-strong: oklch(0.85 0.01 286);
+
+  /* Brand accent (violet — lighter hover on dark) */
+  --accent: oklch(0.606 0.25 292.717);
+  --accent-strong: oklch(0.68 0.2 293);
+  --accent-foreground: oklch(1 0 0);
+  --accent-soft: color-mix(in oklab, var(--accent) 22%, transparent);
+
+  /* Semantic */
+  --success: oklch(0.7 0.15 162);
+  --warning: oklch(0.78 0.16 75);
+  --danger: oklch(0.704 0.191 22.216);
 }
 
 @theme inline {
@@ -48,8 +95,22 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
 
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  /* shadcn aliases */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
 
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 0.35rem);
@@ -68,7 +129,7 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Aurora backdrop used behind the app shell. */
+/* Subtle aurora backdrop behind the app shell (tuned to be gentle in light). */
 .luna-aurora::before {
   content: "";
   position: fixed;
@@ -76,12 +137,16 @@ body {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(60rem 40rem at 15% -10%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 70%),
-    radial-gradient(50rem 40rem at 110% 10%, color-mix(in oklab, #3b82f6 16%, transparent), transparent 70%);
+    radial-gradient(60rem 40rem at 15% -10%, color-mix(in oklab, var(--accent) 14%, transparent), transparent 70%),
+    radial-gradient(50rem 40rem at 110% 10%, color-mix(in oklab, oklch(0.62 0.19 250) 12%, transparent), transparent 70%);
+  opacity: 0.5;
+}
+
+.dark .luna-aurora::before {
   opacity: 0.7;
 }
 
-/* Thin, unobtrusive scrollbars that match the surface palette. */
+/* Thin, unobtrusive scrollbars. */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--border-strong) transparent;

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "./brand/Logo";
 import { UserMenu } from "./UserMenu";
+import { ThemeToggle } from "./ThemeToggle";
 import { cn } from "@/lib/utils";
 
 /**
@@ -34,6 +35,7 @@ export function AppHeader({
       )}
       <div className="ml-auto flex items-center gap-2">
         {right}
+        <ThemeToggle />
         <UserMenu />
       </div>
     </header>
