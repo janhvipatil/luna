@@ -61,6 +61,10 @@ export interface Scene {
   durationSec: number;
   status: GenerationStatus;
   asset?: GeneratedAsset;
+  /** Prior generations kept so the user can compare and pick the best take. */
+  takes?: GeneratedAsset[];
+  /** Optional seed for reproducible generation. */
+  seed?: number;
   error?: string;
 }
 

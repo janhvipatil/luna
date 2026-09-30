@@ -49,9 +49,14 @@ interface LunaState {
   // Generation lifecycle
   setSceneStatus: (storyboardId: string, sceneId: string, status: GenerationStatus, error?: string) => void;
   setSceneAsset: (storyboardId: string, sceneId: string, asset: GeneratedAsset) => void;
+  /** Make a previous take the active asset for a scene. */
+  selectTake: (storyboardId: string, sceneId: string, asset: GeneratedAsset) => void;
 
   setProviderId: (id: string) => void;
 }
+
+/** Cap on how many prior takes to keep per scene. */
+const MAX_TAKES = 8;
 
 function newScene(overrides: Partial<Scene> = {}): Scene {
   return {
@@ -213,6 +218,21 @@ export const useLunaStore = create<LunaState>()((set, get) => ({
         ),
 
       setSceneAsset: (storyboardId, sceneId, asset) =>
+        set((s) =>
+          withStoryboard(s, storyboardId, (sb) => ({
+            ...sb,
+            scenes: sb.scenes.map((sc) => {
+              if (sc.id !== sceneId) return sc;
+              // Keep the new asset plus recent prior takes (newest first, deduped).
+              const history = [asset, ...(sc.takes ?? [])]
+                .filter((a, i, arr) => arr.findIndex((b) => b.url === a.url) === i)
+                .slice(0, MAX_TAKES);
+              return { ...sc, asset, takes: history, status: "ready", error: undefined };
+            }),
+          })),
+        ),
+
+      selectTake: (storyboardId, sceneId, asset) =>
         set((s) =>
           withStoryboard(s, storyboardId, (sb) => ({
             ...sb,

@@ -43,6 +43,8 @@ function parseScene(raw: unknown): Scene {
     durationSec: typeof o.durationSec === "number" ? o.durationSec : 3,
     status,
     asset: o.asset as Scene["asset"],
+    takes: Array.isArray(o.takes) ? (o.takes as Scene["takes"]) : undefined,
+    seed: typeof o.seed === "number" ? o.seed : undefined,
   };
 }
 
@@ -81,6 +83,8 @@ export function storyboardToRow(
     durationSec: sc.durationSec,
     status: sc.status === "generating" || sc.status === "queued" ? "idle" : sc.status,
     asset: sc.asset ?? null,
+    takes: sc.takes ?? null,
+    seed: sc.seed ?? null,
   }));
 
   return {

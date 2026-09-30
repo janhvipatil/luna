@@ -33,6 +33,7 @@ export function useGeneration(storyboard: Storyboard) {
             medium: scene.medium,
             aspect: storyboard.format,
             sceneTitle: scene.title,
+            seed: scene.seed,
             providerId,
             storyboardId: storyboard.id,
             sceneId: scene.id,

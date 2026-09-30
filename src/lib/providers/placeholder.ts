@@ -57,12 +57,13 @@ export function buildPlaceholderSvg({
   const w = 400;
   const h = Math.round((preset.height / preset.width) * w);
   const [c1, c2, accent] = STYLE_PALETTE[style];
+  const seedSalt = seed != null ? `#${seed}` : "";
   const h1 = seed ?? hashString(prompt + style);
   const angle = h1 % 360;
 
-  // A few drifting "orbs" seeded by the prompt so each frame is distinct.
+  // A few drifting "orbs" seeded by prompt + seed so each take is distinct.
   const orbs = Array.from({ length: 4 }, (_, i) => {
-    const s = hashString(prompt + i);
+    const s = hashString(prompt + seedSalt + i);
     const cx = (s % 100) / 100 * w;
     const cy = ((s >> 3) % 100) / 100 * h;
     const r = 30 + ((s >> 5) % 60);

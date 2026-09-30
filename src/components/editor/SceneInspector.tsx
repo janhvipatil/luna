@@ -1,11 +1,11 @@
 "use client";
 
-import { Film, ImageIcon, Minus, Plus, Trash2 } from "lucide-react";
+import { Check, Dices, Film, ImageIcon, Layers, Lock, Minus, Plus, Trash2, X } from "lucide-react";
 import type { Scene, SceneMedium, VisualStyle } from "@/lib/types";
 import { Button, Input, Label, Textarea } from "@/components/ui";
 import { VISUAL_STYLES } from "@/lib/constants";
 import { useLunaStore } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import { cn, isVideoUrl } from "@/lib/utils";
 
 /**
  * Right-hand editor for the selected scene. Every change writes straight to the
@@ -24,8 +24,10 @@ export function SceneInspector({
 }) {
   const updateScene = useLunaStore((s) => s.updateScene);
   const deleteScene = useLunaStore((s) => s.deleteScene);
+  const selectTake = useLunaStore((s) => s.selectTake);
 
   const patch = (p: Partial<Scene>) => updateScene(storyboardId, scene.id, p);
+  const takes = scene.takes ?? [];
 
   return (
     <div className="flex h-full flex-col overflow-y-auto">
@@ -159,6 +161,85 @@ export function SceneInspector({
             </Button>
           </div>
         </div>
+
+        {/* Seed */}
+        <div>
+          <Label>Seed</Label>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              placeholder="Random"
+              value={scene.seed ?? ""}
+              onChange={(e) =>
+                patch({ seed: e.target.value === "" ? undefined : Number(e.target.value) })
+              }
+            />
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={() => patch({ seed: Math.floor(Math.random() * 1_000_000) })}
+              aria-label="Randomize seed"
+              title="Randomize"
+            >
+              <Dices className="h-4 w-4" />
+            </Button>
+            {scene.seed != null && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => patch({ seed: undefined })}
+                aria-label="Clear seed"
+                title="Clear (use random each time)"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted">
+            <Lock className="h-3 w-3" />
+            {scene.seed != null ? "Locked — re-runs are reproducible." : "Random each generation."}
+          </p>
+        </div>
+
+        {/* Takes gallery */}
+        {takes.length > 1 && (
+          <div>
+            <Label className="inline-flex items-center gap-1">
+              <Layers className="h-3.5 w-3.5" /> Takes ({takes.length})
+            </Label>
+            <div className="grid grid-cols-4 gap-1.5">
+              {takes.map((take, i) => {
+                const active = take.url === scene.asset?.url;
+                return (
+                  <button
+                    key={`${take.url}-${i}`}
+                    onClick={() => selectTake(storyboardId, scene.id, take)}
+                    className={cn(
+                      "relative aspect-square overflow-hidden rounded-md border transition-colors",
+                      active ? "border-accent ring-1 ring-accent" : "border-border hover:border-border-strong",
+                    )}
+                    title={active ? "Current take" : "Use this take"}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={take.posterUrl ?? take.url}
+                      alt={`Take ${i + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                    {isVideoUrl(take.url) && (
+                      <Film className="absolute right-0.5 top-0.5 h-3 w-3 text-white drop-shadow" />
+                    )}
+                    {active && (
+                      <span className="absolute bottom-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-accent-foreground">
+                        <Check className="h-2.5 w-2.5" />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {scene.asset && (
           <div className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-[11px] text-muted">
