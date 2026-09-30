@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Moon, Plus, Sparkles } from "lucide-react";
+import { Moon, Plus, Sparkles, Wand2 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { Button, Card } from "@/components/ui";
 import { NewStoryboardModal } from "./NewStoryboardModal";
+import { DraftWithAIModal } from "./DraftWithAIModal";
 import { StoryboardCard } from "./StoryboardCard";
 import { ProviderStatusChip } from "@/components/providers/ProviderStatusChip";
 import { sortStoryboards, useLunaStore } from "@/lib/store";
@@ -23,6 +24,7 @@ export function Dashboard() {
   const storyboards = useMemo(() => sortStoryboards(storyboardsMap), [storyboardsMap]);
   const createFromTemplate = useLunaStore((s) => s.createFromTemplate);
   const [newOpen, setNewOpen] = useState(false);
+  const [draftOpen, setDraftOpen] = useState(false);
 
   function startFromTemplate(templateId: string) {
     const template = TEMPLATES.find((t) => t.id === templateId);
@@ -37,6 +39,10 @@ export function Dashboard() {
         right={
           <>
             <ProviderStatusChip />
+            <Button size="sm" variant="secondary" onClick={() => setDraftOpen(true)}>
+              <Wand2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Draft with AI</span>
+            </Button>
             <Button size="sm" onClick={() => setNewOpen(true)}>
               <Plus className="h-4 w-4" /> New
             </Button>
@@ -64,6 +70,17 @@ export function Dashboard() {
         <section className="mb-10">
           <h2 className="mb-3 text-sm font-medium text-muted-strong">Start from a template</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <button
+              onClick={() => setDraftOpen(true)}
+              className="flex h-full min-h-[104px] flex-col items-start justify-center gap-2 rounded-xl border border-accent/50 bg-accent-soft p-4 text-left transition-colors hover:border-accent"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                <Wand2 className="h-4 w-4" />
+              </div>
+              <div className="text-sm font-medium text-foreground">Draft with AI</div>
+              <div className="text-xs text-muted">Describe it — Luna writes the storyboard</div>
+            </button>
+
             <button
               onClick={() => setNewOpen(true)}
               className="flex h-full min-h-[104px] flex-col items-start justify-center gap-2 rounded-xl border border-dashed border-border-strong bg-surface/40 p-4 text-left transition-colors hover:border-accent hover:bg-accent-soft"
@@ -128,6 +145,7 @@ export function Dashboard() {
       </main>
 
       <NewStoryboardModal open={newOpen} onClose={() => setNewOpen(false)} />
+      <DraftWithAIModal open={draftOpen} onClose={() => setDraftOpen(false)} />
     </>
   );
 }
