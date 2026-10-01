@@ -1,8 +1,9 @@
 "use client";
 
-import { Check, Copy, Dices, Film, ImageIcon, Layers, Lock, Minus, Plus, Trash2, X } from "lucide-react";
+import { useState } from "react";
+import { AudioLines, Check, Copy, Dices, Film, ImageIcon, Layers, Lock, Minus, Plus, Trash2, X } from "lucide-react";
 import type { Scene, SceneMedium, VisualStyle } from "@/lib/types";
-import { Button, Input, Label, Textarea } from "@/components/ui";
+import { Button, Input, Label, Spinner, Textarea } from "@/components/ui";
 import { VISUAL_STYLES } from "@/lib/constants";
 import { useLunaStore } from "@/lib/store";
 import { cn, isVideoUrl } from "@/lib/utils";
@@ -31,6 +32,32 @@ export function SceneInspector({
 
   const patch = (p: Partial<Scene>) => updateScene(storyboardId, scene.id, p);
   const takes = scene.takes ?? [];
+
+  const [narrating, setNarrating] = useState(false);
+  const [narrateError, setNarrateError] = useState<string>();
+
+  async function generateVoiceover() {
+    if (!scene.script.trim()) {
+      setNarrateError("Write a script line first.");
+      return;
+    }
+    setNarrating(true);
+    setNarrateError(undefined);
+    try {
+      const res = await fetch("/api/narrate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: scene.script, storyboardId, sceneId: scene.id }),
+      });
+      const data: { url?: string; error?: string } = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error || "Narration failed.");
+      patch({ narrationUrl: data.url });
+    } catch (err) {
+      setNarrateError(err instanceof Error ? err.message : "Narration failed.");
+    } finally {
+      setNarrating(false);
+    }
+  }
 
   return (
     <div className="flex h-full flex-col overflow-y-auto">
@@ -102,6 +129,30 @@ export function SceneInspector({
             onChange={(e) => patch({ script: e.target.value })}
             placeholder="The line of voiceover or on-screen text for this beat."
           />
+          {/* Voiceover: synthesize the script to narration baked into the export. */}
+          <div className="mt-2 flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={generateVoiceover}
+              disabled={narrating || !scene.script.trim()}
+            >
+              {narrating ? <Spinner className="h-3.5 w-3.5" /> : <AudioLines className="h-3.5 w-3.5" />}
+              {scene.narrationUrl ? "Redo voiceover" : "Voiceover"}
+            </Button>
+            {scene.narrationUrl && (
+              <button
+                onClick={() => patch({ narrationUrl: undefined })}
+                className="text-[11px] text-muted hover:text-danger"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+          {scene.narrationUrl && (
+            <audio src={scene.narrationUrl} controls className="mt-2 h-8 w-full" />
+          )}
+          {narrateError && <p className="mt-1 text-[11px] text-danger">{narrateError}</p>}
         </div>
 
         {/* Medium */}
