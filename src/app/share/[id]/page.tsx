@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -7,6 +8,24 @@ import { AspectFrame } from "@/components/AspectFrame";
 import { Logo } from "@/components/brand/Logo";
 import { Badge } from "@/components/ui";
 import { formatDuration, isVideoUrl } from "@/lib/utils";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/share/[id]">): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("storyboards")
+    .select("title, description")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!data) return { title: "Luna" };
+  const title = `${data.title} · Luna`;
+  const description = data.description || "A short-form storyboard made with Luna.";
+  // The opengraph-image.tsx file convention supplies the image automatically.
+  return { title, description, openGraph: { title, description }, twitter: { card: "summary_large_image", title, description } };
+}
 
 /**
  * Public, read-only storyboard view. RLS ("Anyone can view shared storyboards")
