@@ -43,6 +43,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      generation_jobs: {
+        Row: {
+          created_at: string;
+          error: string | null;
+          id: string;
+          result: Json | null;
+          scene_id: string;
+          status: string;
+          storyboard_id: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          error?: string | null;
+          id?: string;
+          result?: Json | null;
+          scene_id: string;
+          status?: string;
+          storyboard_id: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          error?: string | null;
+          id?: string;
+          result?: Json | null;
+          scene_id?: string;
+          status?: string;
+          storyboard_id?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       storyboards: {
         Row: {
           created_at: string;

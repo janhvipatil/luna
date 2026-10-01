@@ -17,6 +17,7 @@ import { SaveIndicator } from "./SaveIndicator";
 import type { Storyboard } from "@/lib/types";
 import { useLunaStore } from "@/lib/store";
 import { useGeneration } from "@/lib/useGeneration";
+import { useRecoverJobs } from "@/lib/data/useRecoverJobs";
 
 /**
  * The editor's working surface. Receives a guaranteed-present storyboard, so it
@@ -25,6 +26,7 @@ import { useGeneration } from "@/lib/useGeneration";
  */
 export function EditorWorkspace({ storyboard }: { storyboard: Storyboard }) {
   const updateStoryboard = useLunaStore((s) => s.updateStoryboard);
+  useRecoverJobs(storyboard.id);
   const { generateScene, generateAll, busy } = useGeneration(storyboard);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);

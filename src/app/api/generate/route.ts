@@ -54,6 +54,24 @@ export async function POST(request: Request) {
     seed: typeof seed === "number" ? seed : undefined,
   };
 
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Record a durable job so a generation that finishes after the client
+  // disconnects isn't lost — the client reconciles ready jobs on next load.
+  // Only when we have a user + a scene to attach it to.
+  let jobId: string | null = null;
+  if (user && storyboardId && sceneId) {
+    const { data: job } = await supabase
+      .from("generation_jobs")
+      .insert({ storyboard_id: storyboardId, scene_id: sceneId, status: "processing" })
+      .select("id")
+      .maybeSingle();
+    jobId = job?.id ?? null;
+  }
+
   try {
     const result = await generate(providerId, req);
     // Report which provider actually ran, in case of fallback.
@@ -62,11 +80,6 @@ export async function POST(request: Request) {
     // Re-host the asset in Supabase Storage so it survives (provider URLs can
     // expire) and doesn't bloat the storyboard row. Best-effort: if storage
     // fails, fall back to the provider URL so generation still succeeds.
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
     let url = result.url;
     let posterUrl = result.posterUrl;
     if (user) {
@@ -86,12 +99,30 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ ...result, url, posterUrl, resolvedProviderId: resolved.id });
-  } catch (err) {
-    if (err instanceof ProviderNotConfiguredError) {
-      return NextResponse.json({ error: err.message }, { status: 422 });
+    // The normalized asset the client stores on the scene — also persisted on
+    // the job so it can be recovered after a disconnect.
+    const asset = {
+      url,
+      medium: result.medium,
+      providerId: resolved.id,
+      posterUrl,
+      createdAt: Date.now(),
+    };
+
+    if (jobId) {
+      await supabase
+        .from("generation_jobs")
+        .update({ status: "ready", result: asset })
+        .eq("id", jobId);
     }
+
+    return NextResponse.json({ ...result, ...asset, resolvedProviderId: resolved.id });
+  } catch (err) {
+    const status = err instanceof ProviderNotConfiguredError ? 422 : 502;
     const message = err instanceof Error ? err.message : "Generation failed.";
-    return NextResponse.json({ error: message }, { status: 502 });
+    if (jobId) {
+      await supabase.from("generation_jobs").update({ status: "error", error: message }).eq("id", jobId);
+    }
+    return NextResponse.json({ error: message }, { status });
   }
 }
