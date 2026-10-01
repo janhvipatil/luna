@@ -9,6 +9,23 @@ import { rowToStoryboard, storyboardToRow } from "./mappers";
 
 const AUTOSAVE_MS = 800;
 
+/** Best-effort removal of a storyboard's files from the assets bucket. */
+async function removeStoryboardAssets(
+  supabase: ReturnType<typeof createClient>,
+  userId: string | null,
+  storyboardId: string,
+) {
+  if (!userId) return;
+  const prefix = `${userId}/${storyboardId}`;
+  const { data: files, error } = await supabase.storage.from("assets").list(prefix, {
+    limit: 1000,
+  });
+  if (error || !files?.length) return;
+  const paths = files.map((f) => `${prefix}/${f.name}`);
+  const { error: rmErr } = await supabase.storage.from("assets").remove(paths);
+  if (rmErr) console.error("Failed to clean up storyboard assets:", rmErr.message);
+}
+
 /**
  * Keeps the client store and the user's Supabase rows in sync.
  *
@@ -27,11 +44,17 @@ export function StoreSync() {
   const hydrate = useLunaStore((s) => s.hydrate);
   const knownRef = useRef<Map<string, number>>(new Map());
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const userIdRef = useRef<string | null>(null);
 
   // Initial load.
   useEffect(() => {
     let active = true;
     (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      userIdRef.current = user?.id ?? null;
+
       const { data, error } = await supabase
         .from("storyboards")
         .select("*")
@@ -116,6 +139,10 @@ export function StoreSync() {
                 setStatus("error");
               } else {
                 setStatus("saved");
+                // Clean up the storyboard's generated assets (best-effort) so
+                // Storage doesn't accumulate orphans. The DB rows (jobs) cascade
+                // automatically; Storage files don't.
+                void removeStoryboardAssets(supabase, userIdRef.current, id);
               }
             });
         }
