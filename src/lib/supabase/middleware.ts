@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "./types";
 
 /** Paths that don't require a session. */
-const PUBLIC_PREFIXES = ["/login", "/signup", "/auth", "/api/providers"];
+const PUBLIC_PREFIXES = ["/login", "/signup", "/auth", "/share", "/api/providers"];
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));

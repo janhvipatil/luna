@@ -55,12 +55,22 @@ export function StoreSync() {
   useEffect(() => {
     const timers = timersRef.current;
 
+    const setStatus = (s: "saving" | "saved" | "error") =>
+      useLunaStore.getState().setSaveStatus(s);
+
     const upsert = async (sb: Storyboard) => {
+      setStatus("saving");
       const { error } = await supabase.from("storyboards").upsert(storyboardToRow(sb));
-      if (error) console.error("Failed to save storyboard:", error.message);
+      if (error) {
+        console.error("Failed to save storyboard:", error.message);
+        setStatus("error");
+      } else {
+        setStatus("saved");
+      }
     };
 
     const scheduleUpsert = (sb: Storyboard) => {
+      setStatus("saving");
       const existing = timers.get(sb.id);
       if (existing) clearTimeout(existing);
       timers.set(
@@ -95,12 +105,18 @@ export function StoreSync() {
             clearTimeout(t);
             timers.delete(id);
           }
+          setStatus("saving");
           void supabase
             .from("storyboards")
             .delete()
             .eq("id", id)
             .then(({ error }) => {
-              if (error) console.error("Failed to delete storyboard:", error.message);
+              if (error) {
+                console.error("Failed to delete storyboard:", error.message);
+                setStatus("error");
+              } else {
+                setStatus("saved");
+              }
             });
         }
       }

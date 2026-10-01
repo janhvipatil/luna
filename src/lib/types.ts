@@ -74,6 +74,8 @@ export interface Storyboard {
   description: string;
   format: AspectRatio;
   scenes: Scene[];
+  /** When true, anyone with the link can view (read-only). */
+  isShared: boolean;
   createdAt: number;
   updatedAt: number;
 }

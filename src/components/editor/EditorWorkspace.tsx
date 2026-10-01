@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Download, Play, Sparkles } from "lucide-react";
+import { ArrowLeft, Download, Play, Share2, Sparkles } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { Badge, Button } from "@/components/ui";
 import { ProviderStatusChip } from "@/components/providers/ProviderStatusChip";
@@ -12,6 +12,8 @@ import { SceneInspector } from "./SceneInspector";
 import { SceneStrip } from "./SceneStrip";
 import { ExportModal } from "./ExportModal";
 import { PreviewPlayer } from "./PreviewPlayer";
+import { ShareModal } from "./ShareModal";
+import { SaveIndicator } from "./SaveIndicator";
 import type { Storyboard } from "@/lib/types";
 import { useLunaStore } from "@/lib/store";
 import { useGeneration } from "@/lib/useGeneration";
@@ -27,6 +29,7 @@ export function EditorWorkspace({ storyboard }: { storyboard: Storyboard }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [playerOpen, setPlayerOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const selectedScene =
     storyboard.scenes.find((s) => s.id === selectedId) ?? storyboard.scenes[0] ?? null;
@@ -51,6 +54,7 @@ export function EditorWorkspace({ storyboard }: { storyboard: Storyboard }) {
               onCommit={(title) => updateStoryboard(storyboard.id, { title })}
             />
             <Badge tone="accent">{storyboard.format}</Badge>
+            <SaveIndicator />
           </>
         }
         right={
@@ -64,6 +68,10 @@ export function EditorWorkspace({ storyboard }: { storyboard: Storyboard }) {
             >
               <Play className="h-4 w-4" />
               <span className="hidden sm:inline">Play</span>
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setShareOpen(true)}>
+              <Share2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Share</span>
             </Button>
             <Button
               size="sm"
@@ -93,6 +101,7 @@ export function EditorWorkspace({ storyboard }: { storyboard: Storyboard }) {
       {playerOpen && (
         <PreviewPlayer storyboard={storyboard} onClose={() => setPlayerOpen(false)} />
       )}
+      {shareOpen && <ShareModal storyboard={storyboard} onClose={() => setShareOpen(false)} />}
 
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">

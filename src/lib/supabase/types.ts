@@ -49,6 +49,7 @@ export type Database = {
           description: string;
           format: string;
           id: string;
+          is_shared: boolean;
           scenes: Json;
           title: string;
           updated_at: string;
@@ -59,6 +60,7 @@ export type Database = {
           description?: string;
           format?: string;
           id?: string;
+          is_shared?: boolean;
           scenes?: Json;
           title?: string;
           updated_at?: string;
@@ -69,6 +71,7 @@ export type Database = {
           description?: string;
           format?: string;
           id?: string;
+          is_shared?: boolean;
           scenes?: Json;
           title?: string;
           updated_at?: string;

@@ -21,10 +21,14 @@ import { createId, createUuid } from "./utils";
  * editor stays snappy (local mutations) while every change is persisted.
  */
 
+export type SaveStatus = "idle" | "saving" | "saved" | "error";
+
 interface LunaState {
   storyboards: Record<string, Storyboard>;
   /** True once the initial server fetch has populated the store. */
   hydrated: boolean;
+  /** Persistence status surfaced by StoreSync (for the autosave indicator). */
+  saveStatus: SaveStatus;
   /** Preferred generation provider id (see lib/providers). */
   providerId: string;
 
@@ -32,6 +36,7 @@ interface LunaState {
   hydrate: (storyboards: Storyboard[]) => void;
   /** Clear all state (on sign-out). */
   reset: () => void;
+  setSaveStatus: (status: SaveStatus) => void;
 
   // Storyboard CRUD
   createStoryboard: (input: { title: string; description?: string; format: AspectRatio }) => string;
@@ -39,6 +44,7 @@ interface LunaState {
   updateStoryboard: (id: string, patch: Partial<Pick<Storyboard, "title" | "description" | "format">>) => void;
   deleteStoryboard: (id: string) => void;
   duplicateStoryboard: (id: string) => string | undefined;
+  setStoryboardShared: (id: string, shared: boolean) => void;
 
   // Scene CRUD
   addScene: (storyboardId: string, afterSceneId?: string) => string | undefined;
@@ -88,6 +94,7 @@ function withStoryboard(
 export const useLunaStore = create<LunaState>()((set, get) => ({
       storyboards: {},
       hydrated: false,
+      saveStatus: "idle",
       providerId: "mock",
 
       hydrate: (list) =>
@@ -97,6 +104,7 @@ export const useLunaStore = create<LunaState>()((set, get) => ({
         }),
 
       reset: () => set({ storyboards: {}, hydrated: false }),
+      setSaveStatus: (saveStatus) => set({ saveStatus }),
 
       createStoryboard: ({ title, description = "", format }) => {
         const id = createUuid();
@@ -107,6 +115,7 @@ export const useLunaStore = create<LunaState>()((set, get) => ({
           description,
           format,
           scenes: [newScene({ title: "Opening" })],
+          isShared: false,
           createdAt: now,
           updatedAt: now,
         };
@@ -123,6 +132,7 @@ export const useLunaStore = create<LunaState>()((set, get) => ({
           description: template.description,
           format: template.format,
           scenes: template.scenes.map((s) => newScene(s)),
+          isShared: false,
           createdAt: now,
           updatedAt: now,
         };
@@ -132,6 +142,9 @@ export const useLunaStore = create<LunaState>()((set, get) => ({
 
       updateStoryboard: (id, patch) =>
         set((s) => withStoryboard(s, id, (sb) => ({ ...sb, ...patch }))),
+
+      setStoryboardShared: (id, shared) =>
+        set((s) => withStoryboard(s, id, (sb) => ({ ...sb, isShared: shared }))),
 
       deleteStoryboard: (id) =>
         set((s) => {
@@ -149,6 +162,7 @@ export const useLunaStore = create<LunaState>()((set, get) => ({
           ...source,
           id: newId,
           title: `${source.title} (copy)`,
+          isShared: false,
           scenes: source.scenes.map((sc) => ({
             ...sc,
             id: createId("scene"),
