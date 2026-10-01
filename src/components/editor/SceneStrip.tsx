@@ -57,6 +57,10 @@ export function SceneStrip({
         <h2 className="text-xs font-medium text-muted-strong">
           Timeline · {storyboard.scenes.length} scenes · {formatDuration(totalDuration)}
         </h2>
+        <span className="hidden text-[10px] text-muted md:inline">
+          <kbd className="font-mono">G</kbd> generate · <kbd className="font-mono">N</kbd> new ·{" "}
+          <kbd className="font-mono">P</kbd> play
+        </span>
       </div>
       <div className="flex items-start gap-2 overflow-x-auto px-4 pb-4">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

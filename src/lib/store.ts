@@ -48,6 +48,7 @@ interface LunaState {
 
   // Scene CRUD
   addScene: (storyboardId: string, afterSceneId?: string) => string | undefined;
+  duplicateScene: (storyboardId: string, sceneId: string) => string | undefined;
   updateScene: (storyboardId: string, sceneId: string, patch: Partial<Scene>) => void;
   deleteScene: (storyboardId: string, sceneId: string) => void;
   reorderScenes: (storyboardId: string, orderedIds: string[]) => void;
@@ -192,6 +193,33 @@ export const useLunaStore = create<LunaState>()((set, get) => ({
           }),
         );
         return scene.id;
+      },
+
+      duplicateScene: (storyboardId, sceneId) => {
+        const sb = get().storyboards[storyboardId];
+        if (!sb) return undefined;
+        const source = sb.scenes.find((s) => s.id === sceneId);
+        if (!source) return undefined;
+        // Copy the creative settings but start fresh — a duplicate is a new
+        // take to generate, not a copy of the generated asset.
+        const copy = newScene({
+          title: `${source.title} copy`,
+          prompt: source.prompt,
+          script: source.script,
+          style: source.style,
+          medium: source.medium,
+          durationSec: source.durationSec,
+          seed: source.seed,
+        });
+        const idx = sb.scenes.findIndex((s) => s.id === sceneId);
+        set((s) =>
+          withStoryboard(s, storyboardId, (cur) => {
+            const scenes = [...cur.scenes];
+            scenes.splice(idx + 1, 0, copy);
+            return { ...cur, scenes };
+          }),
+        );
+        return copy.id;
       },
 
       updateScene: (storyboardId, sceneId, patch) =>

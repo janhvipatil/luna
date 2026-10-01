@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Download, Play, Share2, Sparkles } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
@@ -33,11 +33,44 @@ export function EditorWorkspace({ storyboard }: { storyboard: Storyboard }) {
   const [playerOpen, setPlayerOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
+  const addScene = useLunaStore((s) => s.addScene);
+
   const selectedScene =
     storyboard.scenes.find((s) => s.id === selectedId) ?? storyboard.scenes[0] ?? null;
   const sceneNumber = selectedScene
     ? storyboard.scenes.findIndex((s) => s.id === selectedScene.id) + 1
     : 0;
+
+  // Keyboard shortcuts — ignored while typing in a field.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      switch (e.key.toLowerCase()) {
+        case "g":
+          if (selectedScene) {
+            e.preventDefault();
+            void generateScene(selectedScene);
+          }
+          break;
+        case "n": {
+          e.preventDefault();
+          const id = addScene(storyboard.id, selectedScene?.id);
+          if (id) setSelectedId(id);
+          break;
+        }
+        case "p":
+          if (storyboard.scenes.length) {
+            e.preventDefault();
+            setPlayerOpen(true);
+          }
+          break;
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [selectedScene, generateScene, addScene, storyboard.id, storyboard.scenes.length]);
 
   return (
     <>
@@ -128,6 +161,7 @@ export function EditorWorkspace({ storyboard }: { storyboard: Storyboard }) {
                 storyboardId={storyboard.id}
                 sceneNumber={sceneNumber}
                 onDeleted={() => setSelectedId(null)}
+                onDuplicated={(id) => setSelectedId(id)}
               />
             ) : null}
           </aside>

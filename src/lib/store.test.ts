@@ -31,6 +31,21 @@ describe("storyboard CRUD", () => {
     expect(useLunaStore.getState().storyboards[id].scenes.map((s) => s.id)).toEqual([second, first]);
   });
 
+  it("duplicates a scene after it, copying settings but not the asset", () => {
+    const store = useLunaStore.getState();
+    const id = store.createStoryboard({ title: "x", format: "1:1" });
+    const first = useLunaStore.getState().storyboards[id].scenes[0].id;
+    store.updateScene(id, first, { prompt: "a dog", seed: 42 });
+    store.setSceneAsset(id, first, asset("u1"));
+    const dupId = store.duplicateScene(id, first)!;
+    const scenes = useLunaStore.getState().storyboards[id].scenes;
+    expect(scenes.map((s) => s.id)).toEqual([first, dupId]);
+    const dup = scenes[1];
+    expect(dup.prompt).toBe("a dog");
+    expect(dup.seed).toBe(42);
+    expect(dup.asset).toBeUndefined();
+  });
+
   it("duplicate resets sharing and clears generated assets", () => {
     const store = useLunaStore.getState();
     const id = store.createStoryboard({ title: "orig", format: "1:1" });

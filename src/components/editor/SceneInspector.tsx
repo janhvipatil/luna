@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Dices, Film, ImageIcon, Layers, Lock, Minus, Plus, Trash2, X } from "lucide-react";
+import { Check, Copy, Dices, Film, ImageIcon, Layers, Lock, Minus, Plus, Trash2, X } from "lucide-react";
 import type { Scene, SceneMedium, VisualStyle } from "@/lib/types";
 import { Button, Input, Label, Textarea } from "@/components/ui";
 import { VISUAL_STYLES } from "@/lib/constants";
@@ -16,14 +16,17 @@ export function SceneInspector({
   storyboardId,
   sceneNumber,
   onDeleted,
+  onDuplicated,
 }: {
   scene: Scene;
   storyboardId: string;
   sceneNumber: number;
   onDeleted: () => void;
+  onDuplicated: (newSceneId: string) => void;
 }) {
   const updateScene = useLunaStore((s) => s.updateScene);
   const deleteScene = useLunaStore((s) => s.deleteScene);
+  const duplicateScene = useLunaStore((s) => s.duplicateScene);
   const selectTake = useLunaStore((s) => s.selectTake);
 
   const patch = (p: Partial<Scene>) => updateScene(storyboardId, scene.id, p);
@@ -38,18 +41,31 @@ export function SceneInspector({
           </span>
           <span className="text-sm font-medium text-foreground">Scene settings</span>
         </div>
-        <button
-          onClick={() => {
-            if (confirm("Delete this scene?")) {
-              deleteScene(storyboardId, scene.id);
-              onDeleted();
-            }
-          }}
-          className="rounded-lg p-1.5 text-muted transition-colors hover:bg-danger/10 hover:text-danger"
-          aria-label="Delete scene"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => {
+              const newId = duplicateScene(storyboardId, scene.id);
+              if (newId) onDuplicated(newId);
+            }}
+            className="rounded-lg p-1.5 text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
+            aria-label="Duplicate scene"
+            title="Duplicate scene"
+          >
+            <Copy className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => {
+              if (confirm("Delete this scene?")) {
+                deleteScene(storyboardId, scene.id);
+                onDeleted();
+              }
+            }}
+            className="rounded-lg p-1.5 text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+            aria-label="Delete scene"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       <div className="space-y-5 p-4">
