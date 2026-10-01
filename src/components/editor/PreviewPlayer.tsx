@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pause, Play, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
 import type { Storyboard } from "@/lib/types";
 import { AspectFrame } from "@/components/AspectFrame";
@@ -31,6 +31,19 @@ export function PreviewPlayer({
   const scenes = storyboard.scenes;
   const scene = scenes[index];
   const atEnd = index >= scenes.length;
+  const musicRef = useRef<HTMLAudioElement | null>(null);
+
+  // Background music follows play/pause/mute.
+  useEffect(() => {
+    const el = musicRef.current;
+    if (!el) return;
+    if (playing && !muted && !atEnd) {
+      el.volume = 0.3;
+      void el.play().catch(() => {});
+    } else {
+      el.pause();
+    }
+  }, [playing, muted, atEnd]);
 
   // Drive playback: show a scene, narrate it, advance after its duration.
   // When we run past the last scene the effect simply no-ops (atEnd), so there's
@@ -53,12 +66,14 @@ export function PreviewPlayer({
   }, [onClose]);
 
   function restart() {
+    if (musicRef.current) musicRef.current.currentTime = 0;
     setIndex(0);
     setPlaying(true);
   }
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 p-4">
+      {storyboard.musicUrl && <audio ref={musicRef} src={storyboard.musicUrl} loop preload="auto" />}
       <button
         onClick={onClose}
         className="absolute right-4 top-4 rounded-lg p-2 text-white/70 hover:bg-white/10 hover:text-white"

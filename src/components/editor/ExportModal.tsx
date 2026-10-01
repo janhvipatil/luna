@@ -8,6 +8,7 @@ import type { Storyboard } from "@/lib/types";
 import { FORMAT_PRESETS } from "@/lib/constants";
 import { formatDuration } from "@/lib/utils";
 import { useBrandKit } from "@/lib/data/UserContext";
+import { MusicControl } from "./MusicControl";
 import { downloadBlob, renderStoryboardVideo, type RenderResult } from "@/lib/export/renderVideo";
 
 type Phase = "idle" | "rendering" | "done" | "error";
@@ -92,6 +93,8 @@ export function ExportModal({
             <div className="text-[11px] text-muted">runtime</div>
           </div>
         </div>
+
+        {phase === "idle" && <MusicControl storyboard={storyboard} />}
 
         {ungenerated > 0 && phase === "idle" && (
           <div className="flex items-start gap-2 rounded-lg bg-warning/10 px-3 py-2 text-xs text-warning">

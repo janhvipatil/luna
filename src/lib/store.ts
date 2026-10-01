@@ -41,7 +41,10 @@ interface LunaState {
   // Storyboard CRUD
   createStoryboard: (input: { title: string; description?: string; format: AspectRatio }) => string;
   createFromTemplate: (template: Template, titleOverride?: string) => string;
-  updateStoryboard: (id: string, patch: Partial<Pick<Storyboard, "title" | "description" | "format">>) => void;
+  updateStoryboard: (
+    id: string,
+    patch: Partial<Pick<Storyboard, "title" | "description" | "format" | "musicUrl">>,
+  ) => void;
   deleteStoryboard: (id: string) => void;
   duplicateStoryboard: (id: string) => string | undefined;
   setStoryboardShared: (id: string, shared: boolean) => void;

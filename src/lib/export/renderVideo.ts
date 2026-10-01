@@ -157,6 +157,120 @@ function drawScene(
   }
 }
 
+interface PreparedAudio {
+  track: MediaStreamTrack;
+  ctx: AudioContext;
+  start: (t0: number) => void;
+  stop: () => void;
+}
+
+const MUSIC_GAIN = 0.28;
+
+/**
+ * Builds a mixed audio track for the export: background music (looped/trimmed to
+ * length, with a short fade-out) plus per-scene narration scheduled at each
+ * scene's start offset. Returns null when there's no audio or the browser lacks
+ * Web Audio. Decoding needs CORS-enabled URLs (our Storage bucket sends CORS *).
+ */
+async function prepareAudio(
+  musicUrl: string | undefined,
+  narrations: Array<{ url: string; offsetSec: number }>,
+  totalSec: number,
+): Promise<PreparedAudio | null> {
+  const AC: typeof AudioContext | undefined =
+    typeof window !== "undefined"
+      ? window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+      : undefined;
+  if (!AC) return null;
+
+  const ctx = new AC();
+  try {
+    await ctx.resume();
+  } catch {
+    /* resumes on first user gesture; export is user-triggered */
+  }
+
+  const dest = ctx.createMediaStreamDestination();
+  const load = async (url: string): Promise<AudioBuffer | null> => {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      return await ctx.decodeAudioData(await res.arrayBuffer());
+    } catch {
+      return null;
+    }
+  };
+
+  const narrationNodes: Array<{ node: AudioBufferSourceNode; offset: number }> = [];
+  for (const n of narrations) {
+    const buf = await load(n.url);
+    if (!buf) continue;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(dest);
+    narrationNodes.push({ node: src, offset: n.offsetSec });
+  }
+
+  let musicNode: AudioBufferSourceNode | null = null;
+  let musicGain: GainNode | null = null;
+  if (musicUrl) {
+    const buf = await load(musicUrl);
+    if (buf) {
+      musicNode = ctx.createBufferSource();
+      musicNode.buffer = buf;
+      musicNode.loop = true;
+      musicGain = ctx.createGain();
+      musicGain.gain.value = MUSIC_GAIN;
+      musicNode.connect(musicGain).connect(dest);
+    }
+  }
+
+  const track = dest.stream.getAudioTracks()[0];
+  if (!track || (!musicNode && narrationNodes.length === 0)) {
+    void ctx.close();
+    return null;
+  }
+
+  return {
+    track,
+    ctx,
+    start: (t0) => {
+      for (const { node, offset } of narrationNodes) {
+        try {
+          node.start(t0 + offset);
+        } catch {
+          /* ignore */
+        }
+      }
+      if (musicNode && musicGain) {
+        try {
+          musicNode.start(t0);
+          const end = t0 + totalSec;
+          musicGain.gain.setValueAtTime(MUSIC_GAIN, Math.max(t0, end - 0.5));
+          musicGain.gain.linearRampToValueAtTime(0.0001, end);
+          musicNode.stop(end + 0.05);
+        } catch {
+          /* ignore */
+        }
+      }
+    },
+    stop: () => {
+      for (const { node } of narrationNodes) {
+        try {
+          node.stop();
+        } catch {
+          /* already stopped */
+        }
+      }
+      try {
+        musicNode?.stop();
+      } catch {
+        /* already stopped */
+      }
+    },
+  };
+}
+
 export async function renderStoryboardVideo(
   storyboard: Storyboard,
   { onProgress, maxDimension = 720, fps = 30, brand = {} }: RenderOptions = {},
@@ -179,8 +293,20 @@ export async function renderStoryboardVideo(
   const images = await Promise.all(scenes.map((s) => (s.asset ? loadImage(s.asset.url) : null)));
   const logo = brand.logoUrl ? await loadImage(brand.logoUrl) : null;
 
+  const totalSec = scenes.reduce((sum, s) => sum + s.durationSec, 0);
+
+  // Build the mixed audio track (music + per-scene narration), if any.
+  const narrations: Array<{ url: string; offsetSec: number }> = [];
+  let acc = 0;
+  for (const s of scenes) {
+    if (s.narrationUrl) narrations.push({ url: s.narrationUrl, offsetSec: acc });
+    acc += s.durationSec;
+  }
+  const audio = await prepareAudio(storyboard.musicUrl, narrations, totalSec);
+
   const { mimeType, extension } = pickMimeType();
   const stream = canvas.captureStream(fps);
+  if (audio) stream.addTrack(audio.track);
   const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 6_000_000 });
   const chunks: BlobPart[] = [];
   recorder.ondataavailable = (e) => {
@@ -193,8 +319,9 @@ export async function renderStoryboardVideo(
   // Draw the first frame before starting so we never record a blank frame.
   drawScene(ctx, w, h, scenes[0], images[0], brand, logo);
   recorder.start();
+  if (audio) audio.start(audio.ctx.currentTime);
 
-  const totalMs = scenes.reduce((sum, s) => sum + s.durationSec, 0) * 1000;
+  const totalMs = totalSec * 1000;
   const start = performance.now();
 
   await new Promise<void>((resolve) => {
@@ -223,6 +350,10 @@ export async function renderStoryboardVideo(
 
   recorder.stop();
   await stopped;
+  if (audio) {
+    audio.stop();
+    void audio.ctx.close();
+  }
   onProgress?.(1);
 
   return { blob: new Blob(chunks, { type: mimeType }), mimeType, extension };

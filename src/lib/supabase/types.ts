@@ -86,6 +86,7 @@ export type Database = {
           format: string;
           id: string;
           is_shared: boolean;
+          music_url: string | null;
           scenes: Json;
           title: string;
           updated_at: string;
@@ -97,6 +98,7 @@ export type Database = {
           format?: string;
           id?: string;
           is_shared?: boolean;
+          music_url?: string | null;
           scenes?: Json;
           title?: string;
           updated_at?: string;
@@ -108,6 +110,7 @@ export type Database = {
           format?: string;
           id?: string;
           is_shared?: boolean;
+          music_url?: string | null;
           scenes?: Json;
           title?: string;
           updated_at?: string;

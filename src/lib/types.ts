@@ -65,6 +65,8 @@ export interface Scene {
   takes?: GeneratedAsset[];
   /** Optional seed for reproducible generation. */
   seed?: number;
+  /** URL of synthesized narration audio for this scene's script (if generated). */
+  narrationUrl?: string;
   error?: string;
 }
 
@@ -76,6 +78,8 @@ export interface Storyboard {
   scenes: Scene[];
   /** When true, anyone with the link can view (read-only). */
   isShared: boolean;
+  /** Optional background-music track mixed into the export. */
+  musicUrl?: string;
   createdAt: number;
   updatedAt: number;
 }
