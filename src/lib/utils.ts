@@ -45,6 +45,38 @@ export function isVideoUrl(url: string): boolean {
   return /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url) || url.startsWith("data:video");
 }
 
+/**
+ * Scene duration (whole seconds) that comfortably fits a narration clip:
+ * the audio length rounded up with a small tail of breathing room, clamped to
+ * the allowed 1–30s range. Falls back to 3s for an unknown length.
+ */
+export function fitDurationToAudio(seconds: number): number {
+  if (!Number.isFinite(seconds) || seconds <= 0) return 3;
+  return Math.min(30, Math.max(1, Math.ceil(seconds + 0.3)));
+}
+
+/** Read an audio file's duration in seconds (0 if it can't be determined). */
+export function getAudioDuration(url: string): Promise<number> {
+  return new Promise((resolve) => {
+    if (typeof Audio === "undefined") {
+      resolve(0);
+      return;
+    }
+    const audio = new Audio();
+    audio.preload = "metadata";
+    let settled = false;
+    const finish = (value: number) => {
+      if (settled) return;
+      settled = true;
+      resolve(Number.isFinite(value) ? value : 0);
+    };
+    audio.addEventListener("loadedmetadata", () => finish(audio.duration));
+    audio.addEventListener("error", () => finish(0));
+    audio.src = url;
+    setTimeout(() => finish(audio.duration || 0), 5000);
+  });
+}
+
 /** Total storyboard runtime in seconds, formatted as m:ss. */
 export function formatDuration(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);

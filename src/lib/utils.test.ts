@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createUuid, formatDuration, isVideoUrl, timeAgo } from "./utils";
+import { createUuid, fitDurationToAudio, formatDuration, isVideoUrl, timeAgo } from "./utils";
 
 describe("createUuid", () => {
   it("produces an RFC-4122 v4 uuid", () => {
@@ -29,6 +29,19 @@ describe("formatDuration", () => {
     expect(formatDuration(0)).toBe("0:00");
     expect(formatDuration(9)).toBe("0:09");
     expect(formatDuration(75)).toBe("1:15");
+  });
+});
+
+describe("fitDurationToAudio", () => {
+  it("rounds up with breathing room and clamps to 1–30s", () => {
+    expect(fitDurationToAudio(4.1)).toBe(5);
+    expect(fitDurationToAudio(0.2)).toBe(1);
+    expect(fitDurationToAudio(100)).toBe(30);
+  });
+  it("falls back to 3s for an unknown length", () => {
+    expect(fitDurationToAudio(0)).toBe(3);
+    expect(fitDurationToAudio(NaN)).toBe(3);
+    expect(fitDurationToAudio(Infinity)).toBe(3);
   });
 });
 

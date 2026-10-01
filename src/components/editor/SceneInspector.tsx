@@ -6,7 +6,7 @@ import type { Scene, SceneMedium, VisualStyle } from "@/lib/types";
 import { Button, Input, Label, Spinner, Textarea } from "@/components/ui";
 import { VISUAL_STYLES } from "@/lib/constants";
 import { useLunaStore } from "@/lib/store";
-import { cn, isVideoUrl } from "@/lib/utils";
+import { cn, fitDurationToAudio, getAudioDuration, isVideoUrl } from "@/lib/utils";
 
 /**
  * Right-hand editor for the selected scene. Every change writes straight to the
@@ -51,7 +51,9 @@ export function SceneInspector({
       });
       const data: { url?: string; error?: string } = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error || "Narration failed.");
-      patch({ narrationUrl: data.url });
+      // Fit the scene to the narration so it doesn't spill into the next scene.
+      const seconds = await getAudioDuration(data.url);
+      patch({ narrationUrl: data.url, durationSec: fitDurationToAudio(seconds) });
     } catch (err) {
       setNarrateError(err instanceof Error ? err.message : "Narration failed.");
     } finally {
@@ -150,7 +152,12 @@ export function SceneInspector({
             )}
           </div>
           {scene.narrationUrl && (
-            <audio src={scene.narrationUrl} controls className="mt-2 h-8 w-full" />
+            <>
+              <audio src={scene.narrationUrl} controls className="mt-2 h-8 w-full" />
+              <p className="mt-1 text-[11px] text-muted">
+                Scene length fitted to the voiceover ({scene.durationSec}s).
+              </p>
+            </>
           )}
           {narrateError && <p className="mt-1 text-[11px] text-danger">{narrateError}</p>}
         </div>
