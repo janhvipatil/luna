@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { AlertCircle, MailCheck } from "lucide-react";
 import { signIn, signUp, type AuthState } from "@/app/(auth)/actions";
-import { Button, Card, Input, Label } from "@/components/ui";
+import { Button, Card, Input, Label, PasswordInput } from "@/components/ui";
 
 /**
  * Shared sign-in / sign-up card. Uses React 19's useActionState so pending and
@@ -77,10 +77,9 @@ export function AuthForm({
 
         <div>
           <Label htmlFor="password">Password</Label>
-          <Input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             required
             placeholder={isSignup ? "At least 6 characters" : "••••••••"}
             autoComplete={isSignup ? "new-password" : "current-password"}
