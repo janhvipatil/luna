@@ -83,11 +83,12 @@ npm start
 
 ## Connecting a real backend
 
-Luna ships with three providers (see [`src/lib/providers`](src/lib/providers)):
+Luna ships with four providers (see [`src/lib/providers`](src/lib/providers)):
 
 | Provider          | Kind                         | Configure with                          |
 | ----------------- | ---------------------------- | --------------------------------------- |
-| **Luna Preview**  | Built-in placeholder         | _nothing — always on_                   |
+| **Google Veo 3.1 Fast** | Video (text/image-to-video, native audio) | `GEMINI_API_KEY`         |
+| **Luna Preview**  | Built-in: matched stock food photos | _nothing — always on_            |
 | **Replicate**     | Hosted open models           | `REPLICATE_API_TOKEN`                   |
 | **ComfyUI**       | Self-hosted node-graph engine| `COMFYUI_URL` (+ a workflow)            |
 

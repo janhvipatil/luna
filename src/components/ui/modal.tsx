@@ -1,12 +1,17 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
  * Lightweight modal. Renders an overlay + centered panel, traps Escape, and
  * locks body scroll while open. Deliberately dependency-free.
+ *
+ * Portaled to <body>: a modal opened from inside the sticky header would
+ * otherwise be trapped in it (the header's backdrop-filter makes it the
+ * containing block for `position: fixed`), clipping the panel and overlay.
  */
 export function Modal({
   open,
@@ -37,9 +42,9 @@ export function Modal({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
@@ -52,6 +57,8 @@ export function Modal({
       <div
         className={cn(
           "relative z-10 w-full max-w-lg rounded-xl border border-border-strong bg-surface shadow-2xl",
+          // Tall content scrolls inside the panel instead of overflowing the screen.
+          "max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain",
           "animate-[popIn_160ms_ease]",
           className,
         )}
@@ -75,6 +82,7 @@ export function Modal({
         @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
         @keyframes popIn { from { opacity: 0; transform: translateY(8px) scale(0.98) } to { opacity: 1; transform: none } }
       `}</style>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -3,16 +3,24 @@
 import { useCallback, useState } from "react";
 import { useLunaStore } from "./store";
 import type { GeneratedAsset, Scene, Storyboard } from "./types";
+import { pollJob, startFrameFor } from "./pollJob";
+
+/** How many scenes "Generate all" runs at once. */
+const GENERATE_ALL_CONCURRENCY = 3;
 
 interface GenerateResponse extends GeneratedAsset {
   resolvedProviderId?: string;
   error?: string;
+  /** Long-running providers (Veo) return a job to poll instead of an asset. */
+  pending?: boolean;
+  jobId?: string;
 }
 
 /**
  * Orchestrates scene generation from the client: flips store status, calls the
  * API, and writes the resulting asset back. Handles a single scene or the whole
- * storyboard (sequentially, to be gentle on rate-limited backends).
+ * storyboard (a few at a time, to be gentle on rate-limited backends). Long-running
+ * providers return a job id, which is polled until the clip is ready.
  */
 export function useGeneration(storyboard: Storyboard) {
   const providerId = useLunaStore((s) => s.providerId);
@@ -34,6 +42,9 @@ export function useGeneration(storyboard: Storyboard) {
             aspect: storyboard.format,
             sceneTitle: scene.title,
             seed: scene.seed,
+            durationSec: scene.durationSec,
+            // Video scenes animate their current still when there is one.
+            startImageUrl: scene.medium === "video" ? startFrameFor(scene) : undefined,
             providerId,
             storyboardId: storyboard.id,
             sceneId: scene.id,
@@ -42,6 +53,11 @@ export function useGeneration(storyboard: Storyboard) {
         const data: GenerateResponse = await res.json();
         if (!res.ok) {
           throw new Error(data.error || `Request failed (${res.status})`);
+        }
+        if (data.pending && data.jobId) {
+          const asset = await pollJob(data.jobId);
+          setSceneAsset(storyboard.id, scene.id, asset);
+          return;
         }
         setSceneAsset(storyboard.id, scene.id, {
           url: data.url,
@@ -63,9 +79,15 @@ export function useGeneration(storyboard: Storyboard) {
       setBusy(true);
       // Mark everything queued up front so the UI reflects the batch.
       scenes.forEach((s) => setSceneStatus(storyboard.id, s.id, "queued"));
-      for (const scene of scenes) {
-        await generateScene(scene);
-      }
+      // A small worker pool: video jobs take minutes, so run a few at once
+      // without hammering rate-limited backends.
+      const queue = [...scenes];
+      const worker = async () => {
+        for (let next = queue.shift(); next; next = queue.shift()) {
+          await generateScene(next);
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(GENERATE_ALL_CONCURRENCY, queue.length) }, worker));
       setBusy(false);
     },
     [generateScene, setSceneStatus, storyboard.id],

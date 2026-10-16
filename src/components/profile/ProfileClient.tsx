@@ -2,14 +2,14 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Check, AlertCircle, Store, Wand2 } from "lucide-react";
+import { ArrowLeft, Check, AlertCircle, Store } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { Avatar } from "@/components/Avatar";
 import { Button, Card, Input, Label, PasswordInput, Textarea } from "@/components/ui";
 import { displayName, useBrandKit, useUser } from "@/lib/data/UserContext";
 import { BRAND_FONTS } from "@/lib/brand";
 import { VENUE_TYPES, type VenueProfile } from "@/lib/venue";
-import { EXAMPLE_VENUE } from "@/lib/examples";
+import { GeminiSettings } from "./GeminiSettings";
 import {
   updateBrandKit,
   updatePassword,
@@ -97,15 +97,6 @@ export function ProfileClient() {
             <h2 className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-strong">
               <Store className="h-4 w-4" /> Your venue
             </h2>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => setVenue(EXAMPLE_VENUE)}
-              title="Fill the form with an example café"
-            >
-              <Wand2 className="h-3.5 w-3.5" /> Use example: Match Ya
-            </Button>
           </div>
           <p className="mb-4 text-xs text-muted">
             Luna fills your venue&apos;s details into every template, caption idea and AI draft.
@@ -179,6 +170,8 @@ export function ProfileClient() {
           </form>
         </Card>
 
+        <GeminiSettings />
+
         {/* Profile form */}
         <Card className="mb-5 p-5">
           <h2 className="mb-4 text-sm font-medium text-muted-strong">Profile</h2>
@@ -239,7 +232,7 @@ export function ProfileClient() {
                     id="color"
                     name="color"
                     type="color"
-                    defaultValue={brand.color ?? "#8b5cf6"}
+                    defaultValue={brand.color ?? "#d9577a"}
                     className="h-9 w-12 cursor-pointer rounded-lg border border-border bg-surface-2"
                   />
                   <span className="text-xs text-muted">Captions &amp; highlights</span>

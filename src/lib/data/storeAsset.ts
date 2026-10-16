@@ -17,9 +17,14 @@ const EXT_BY_TYPE: Record<string, string> = {
   "image/gif": "gif",
   "video/mp4": "mp4",
   "video/webm": "webm",
+  "audio/wav": "wav",
+  "audio/mpeg": "mp3",
 };
 
-async function urlToBytes(url: string): Promise<{ bytes: Buffer; contentType: string }> {
+async function urlToBytes(
+  url: string,
+  headers?: Record<string, string>,
+): Promise<{ bytes: Buffer; contentType: string }> {
   if (url.startsWith("data:")) {
     const match = /^data:([^;,]+)(;base64)?,([\s\S]*)$/.exec(url);
     if (!match) throw new Error("Malformed data URL.");
@@ -29,18 +34,32 @@ async function urlToBytes(url: string): Promise<{ bytes: Buffer; contentType: st
       : Buffer.from(decodeURIComponent(match[3]), "utf8");
     return { bytes, contentType };
   }
-  const res = await fetch(url);
+  const res = await fetch(url, { headers, redirect: "follow" });
   if (!res.ok) throw new Error(`Could not fetch asset (${res.status}).`);
-  const contentType = res.headers.get("content-type") ?? "application/octet-stream";
+  let contentType = res.headers.get("content-type") ?? "application/octet-stream";
+  // Some providers serve video as a generic download; trust the URL instead.
+  if (contentType.startsWith("application/octet-stream") && /\.mp4|video/i.test(url)) {
+    contentType = "video/mp4";
+  }
   return { bytes: Buffer.from(await res.arrayBuffer()), contentType };
 }
 
 export async function storeAsset(
   supabase: SupabaseClient<Database>,
   userId: string,
-  opts: { url: string; storyboardId?: string; sceneId?: string },
+  opts: {
+    url: string;
+    storyboardId?: string;
+    sceneId?: string;
+    /** Extra headers for fetching the source (e.g. a provider API key). */
+    headers?: Record<string, string>;
+    /** Force a content type when the source doesn't report a useful one. */
+    contentType?: string;
+  },
 ): Promise<string> {
-  const { bytes, contentType } = await urlToBytes(opts.url);
+  const fetched = await urlToBytes(opts.url, opts.headers);
+  const bytes = fetched.bytes;
+  const contentType = opts.contentType ?? fetched.contentType;
   const ext = EXT_BY_TYPE[contentType.split(";")[0]] ?? "bin";
   const path = `${userId}/${opts.storyboardId ?? "misc"}/${opts.sceneId ?? crypto.randomUUID()}-${Date.now()}.${ext}`;
 

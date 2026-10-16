@@ -38,13 +38,13 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           fontFamily: "sans-serif",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 32, color: "#a78bfa" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 32, color: "#e8738f" }}>
           <div
             style={{
               width: 40,
               height: 40,
               borderRadius: 999,
-              background: "linear-gradient(135deg, #a78bfa, #6366f1)",
+              background: "linear-gradient(180deg, #f4a7bb, #e8738f 55%, #8fb069)",
             }}
           />
           <span style={{ fontWeight: 600 }}>Luna</span>

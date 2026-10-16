@@ -3,8 +3,9 @@
 /*
   Luna design system — shadcn-style token model.
 
-  A neutral (zinc) palette with a single violet brand accent, defined for both
-  light (default) and dark. Component classes reference these tokens
+  A soft "strawberry matcha" palette — blush-white surfaces, matcha-ink text,
+  a strawberry brand accent and a matcha secondary — defined for both light
+  (default) and dark. Component classes reference these tokens
   (bg-surface, text-muted, bg-accent, border-border, …) so switching themes is a
   pure token swap. next-themes toggles the `.dark` class on <html>.
 */
@@ -12,22 +13,25 @@
 :root {
   --radius: 0.625rem;
 
-  /* Surfaces (light) */
-  --background: oklch(0.985 0.001 286);
-  --surface: oklch(1 0 0);
-  --surface-2: oklch(0.968 0.001 286);
-  --surface-3: oklch(0.94 0.003 286);
-  --border: oklch(0.918 0.004 286);
-  --border-strong: oklch(0.87 0.005 286);
+  /* Surfaces (light — strawberry milk) */
+  --background: oklch(0.988 0.006 15);
+  --surface: oklch(0.999 0.002 15);
+  --surface-2: oklch(0.972 0.01 12);
+  --surface-3: oklch(0.948 0.015 10);
+  --border: oklch(0.93 0.014 12);
+  --border-strong: oklch(0.88 0.02 10);
 
-  /* Text */
-  --foreground: oklch(0.21 0.006 286);
-  --muted: oklch(0.552 0.016 286);
-  --muted-strong: oklch(0.37 0.012 286);
+  /* Text (matcha ink) */
+  --foreground: oklch(0.27 0.028 155);
+  --muted: oklch(0.56 0.022 150);
+  --muted-strong: oklch(0.41 0.026 152);
 
-  /* Brand accent (violet) */
-  --accent: oklch(0.606 0.25 292.717);
-  --accent-strong: oklch(0.541 0.281 293);
+  /* Brand accent (strawberry) + secondary (matcha) */
+  --accent: oklch(0.62 0.16 8);
+  --accent-strong: oklch(0.55 0.17 8);
+  --matcha: oklch(0.66 0.11 135);
+  --matcha-strong: oklch(0.52 0.1 140);
+  --matcha-soft: color-mix(in oklab, var(--matcha) 16%, transparent);
   --accent-foreground: oklch(1 0 0);
   --accent-soft: color-mix(in oklab, var(--accent) 12%, transparent);
 
@@ -52,22 +56,25 @@
 }
 
 .dark {
-  /* Surfaces (dark) */
-  --background: oklch(0.145 0.005 286);
-  --surface: oklch(0.19 0.006 286);
-  --surface-2: oklch(0.23 0.006 286);
-  --surface-3: oklch(0.27 0.006 286);
-  --border: oklch(1 0 0 / 10%);
-  --border-strong: oklch(1 0 0 / 16%);
+  /* Surfaces (dark — deep matcha) */
+  --background: oklch(0.17 0.014 158);
+  --surface: oklch(0.205 0.016 158);
+  --surface-2: oklch(0.245 0.018 158);
+  --surface-3: oklch(0.285 0.02 158);
+  --border: oklch(1 0.02 150 / 10%);
+  --border-strong: oklch(1 0.02 150 / 16%);
 
-  /* Text */
-  --foreground: oklch(0.985 0 0);
-  --muted: oklch(0.705 0.015 286);
-  --muted-strong: oklch(0.85 0.01 286);
+  /* Text (strawberry cream) */
+  --foreground: oklch(0.97 0.01 15);
+  --muted: oklch(0.73 0.02 150);
+  --muted-strong: oklch(0.87 0.014 15);
 
-  /* Brand accent (violet — lighter hover on dark) */
-  --accent: oklch(0.606 0.25 292.717);
-  --accent-strong: oklch(0.68 0.2 293);
+  /* Brand accent (strawberry — lighter on dark) + matcha */
+  --accent: oklch(0.7 0.14 8);
+  --accent-strong: oklch(0.78 0.12 10);
+  --matcha: oklch(0.74 0.12 135);
+  --matcha-strong: oklch(0.8 0.11 135);
+  --matcha-soft: color-mix(in oklab, var(--matcha) 18%, transparent);
   --accent-foreground: oklch(1 0 0);
   --accent-soft: color-mix(in oklab, var(--accent) 22%, transparent);
 
@@ -91,6 +98,9 @@
   --color-accent-strong: var(--accent-strong);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent-soft: var(--accent-soft);
+  --color-matcha: var(--matcha);
+  --color-matcha-strong: var(--matcha-strong);
+  --color-matcha-soft: var(--matcha-soft);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
@@ -137,8 +147,8 @@ body {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(60rem 40rem at 15% -10%, color-mix(in oklab, var(--accent) 14%, transparent), transparent 70%),
-    radial-gradient(50rem 40rem at 110% 10%, color-mix(in oklab, oklch(0.62 0.19 250) 12%, transparent), transparent 70%);
+    radial-gradient(60rem 40rem at 15% -10%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 70%),
+    radial-gradient(50rem 40rem at 110% 10%, color-mix(in oklab, var(--matcha) 16%, transparent), transparent 70%);
   opacity: 0.5;
 }
 

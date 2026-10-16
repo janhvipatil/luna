@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isTtsConfigured, synthesizeSpeech, TtsNotConfiguredError } from "@/lib/narrate/tts";
+import { getAiContext } from "@/lib/ai/context";
 
 export const maxDuration = 60;
 
@@ -16,10 +17,6 @@ interface Body {
  * configured so the UI can prompt for a key.
  */
 export async function POST(request: Request) {
-  if (!isTtsConfigured()) {
-    return NextResponse.json({ error: new TtsNotConfiguredError().message }, { status: 422 });
-  }
-
   let body: Body;
   try {
     body = await request.json();
@@ -36,8 +33,14 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
 
+  // Voiceover runs on the user's own Gemini key (or the server's OpenAI key).
+  const ctx = await getAiContext(supabase, user.id);
+  if (!isTtsConfigured(ctx)) {
+    return NextResponse.json({ error: new TtsNotConfiguredError().message }, { status: 422 });
+  }
+
   try {
-    const audio = await synthesizeSpeech(text);
+    const audio = await synthesizeSpeech(text, ctx);
     const folder = body.storyboardId ?? "misc";
     const scene = body.sceneId ?? crypto.randomUUID();
     const path = `${user.id}/${folder}/narration-${scene}-${Date.now()}.${audio.ext}`;

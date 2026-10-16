@@ -1,6 +1,7 @@
 import type { Scene, Storyboard } from "@/lib/types";
 import { FORMAT_PRESETS } from "@/lib/constants";
 import type { BrandKit } from "@/lib/brand";
+import { isVideoUrl } from "@/lib/utils";
 
 function canvasFont(font: BrandKit["font"]): string {
   if (font === "serif") return "Georgia, serif";
@@ -60,17 +61,41 @@ function loadImage(url: string): Promise<HTMLImageElement | null> {
   });
 }
 
-/** Cover-fit an image into the canvas (like CSS object-fit: cover). */
-function drawCover(
-  ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
-  w: number,
-  h: number,
-) {
-  const scale = Math.max(w / img.width, h / img.height);
-  const dw = img.width * scale;
-  const dh = img.height * scale;
-  ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+/** A scene's visual: a still image or a video clip (e.g. from Veo). */
+type SceneMedia = HTMLImageElement | HTMLVideoElement;
+
+function loadVideo(url: string): Promise<HTMLVideoElement | null> {
+  return new Promise((resolve) => {
+    const video = document.createElement("video");
+    video.crossOrigin = "anonymous";
+    video.muted = true;
+    video.playsInline = true;
+    video.loop = true; // scenes longer than the clip keep moving
+    video.preload = "auto";
+    video.onloadeddata = () => resolve(video);
+    video.onerror = () => resolve(null);
+    video.src = url;
+  });
+}
+
+function loadMedia(url: string): Promise<SceneMedia | null> {
+  return isVideoUrl(url) ? loadVideo(url) : loadImage(url);
+}
+
+function mediaSize(media: SceneMedia): { width: number; height: number } {
+  return media instanceof HTMLVideoElement
+    ? { width: media.videoWidth, height: media.videoHeight }
+    : { width: media.width, height: media.height };
+}
+
+/** Cover-fit an image or video frame into the canvas (like object-fit: cover). */
+function drawCover(ctx: CanvasRenderingContext2D, media: SceneMedia, w: number, h: number) {
+  const { width, height } = mediaSize(media);
+  if (!width || !height) return;
+  const scale = Math.max(w / width, h / height);
+  const dw = width * scale;
+  const dh = height * scale;
+  ctx.drawImage(media, (w - dw) / 2, (h - dh) / 2, dw, dh);
 }
 
 function wrapText(
@@ -99,7 +124,7 @@ function drawScene(
   w: number,
   h: number,
   scene: Scene,
-  img: HTMLImageElement | null,
+  img: SceneMedia | null,
   brand: BrandKit,
   logo: HTMLImageElement | null,
 ) {
@@ -112,8 +137,8 @@ function drawScene(
   } else {
     // Fallback gradient when a scene has no generated asset.
     const g = ctx.createLinearGradient(0, 0, w, h);
-    g.addColorStop(0, "#4338ca");
-    g.addColorStop(1, "#1e1b4b");
+    g.addColorStop(0, "#e8738f");
+    g.addColorStop(1, "#5f7a45");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
   }
@@ -289,8 +314,8 @@ export async function renderStoryboardVideo(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas is not supported in this browser.");
 
-  // Preload every scene's image (and the brand logo) up front.
-  const images = await Promise.all(scenes.map((s) => (s.asset ? loadImage(s.asset.url) : null)));
+  // Preload every scene's image or clip (and the brand logo) up front.
+  const images = await Promise.all(scenes.map((s) => (s.asset ? loadMedia(s.asset.url) : null)));
   const logo = brand.logoUrl ? await loadImage(brand.logoUrl) : null;
 
   const totalSec = scenes.reduce((sum, s) => sum + s.durationSec, 0);
@@ -317,6 +342,7 @@ export async function renderStoryboardVideo(
   });
 
   // Draw the first frame before starting so we never record a blank frame.
+  // (A video's first frame is already decoded by loadVideo.)
   drawScene(ctx, w, h, scenes[0], images[0], brand, logo);
   recorder.start();
   if (audio) audio.start(audio.ctx.currentTime);
@@ -324,10 +350,25 @@ export async function renderStoryboardVideo(
   const totalMs = totalSec * 1000;
   const start = performance.now();
 
+  // Video scenes play in real time from their first frame while on screen.
+  let playing = -1;
+  const enterScene = (idx: number) => {
+    if (idx === playing) return;
+    const prev = images[playing];
+    if (prev instanceof HTMLVideoElement) prev.pause();
+    const next = images[idx];
+    if (next instanceof HTMLVideoElement) {
+      next.currentTime = 0;
+      void next.play().catch(() => {});
+    }
+    playing = idx;
+  };
+
   await new Promise<void>((resolve) => {
     const frame = (now: number) => {
       const elapsed = now - start;
       if (elapsed >= totalMs) {
+        enterScene(-1);
         resolve();
         return;
       }
@@ -341,6 +382,7 @@ export async function renderStoryboardVideo(
         }
         acc += d;
       }
+      enterScene(idx);
       drawScene(ctx, w, h, scenes[idx], images[idx], brand, logo);
       onProgress?.(Math.min(0.99, elapsed / totalMs));
       requestAnimationFrame(frame);

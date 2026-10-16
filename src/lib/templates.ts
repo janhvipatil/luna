@@ -1,4 +1,6 @@
-import type { Template, TemplateCategory } from "./types";
+import type { AspectRatio, GeneratedAsset, Template, TemplateCategory } from "./types";
+import { NON_PHOTO_STYLES, photoUrlForAspect, pickPhoto } from "./photos";
+import exampleMedia from "./examples.media.json";
 import { personalize, type VenueProfile } from "./venue";
 
 /**
@@ -20,6 +22,7 @@ export const TEMPLATES: Template[] = [
   // ── Menu & dishes ────────────────────────────────────────────────────────
   {
     id: "signature-dish",
+    cover: "1414235077428-338989a2e8c0",
     name: "Signature Dish Spotlight",
     description: "Slow, sensory build-up to the one thing everyone orders.",
     format: "9:16",
@@ -36,6 +39,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: "new-menu-drop",
+    cover: "1504754524776-8f4f37790ca0",
     name: "New Menu Drop",
     description: "Countdown-style reveal of new dishes — built for launch week.",
     format: "9:16",
@@ -53,6 +57,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: "latte-art",
+    cover: "1509042239860-f550ce710b93",
     name: "Coffee Ritual",
     description: "ASMR-style coffee pour — grind, tamp, pull, latte art. Endlessly rewatchable.",
     format: "9:16",
@@ -69,6 +74,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: "bake-of-the-day",
+    cover: "1555507036-ab1f4038808a",
     name: "Fresh Out the Oven",
     description: "Morning bake reveal — perfect for bakeries and pastry counters.",
     format: "4:5",
@@ -86,6 +92,7 @@ export const TEMPLATES: Template[] = [
   // ── Offers & promos ──────────────────────────────────────────────────────
   {
     id: "happy-hour",
+    cover: "1497534446932-c925b458314e",
     name: "Happy Hour",
     description: "Punchy, upbeat promo for a time-limited deal.",
     format: "9:16",
@@ -102,6 +109,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: "limited-time",
+    cover: "1533134242443-d4fd215305ad",
     name: "Limited-Time Special",
     description: "Scarcity-driven promo for a seasonal or weekend-only item.",
     format: "9:16",
@@ -117,6 +125,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: "loyalty",
+    cover: "1495474472287-4d71bcdd2085",
     name: "Loyalty Card",
     description: "Turn first-timers into regulars — promote your stamp card or app.",
     format: "1:1",
@@ -132,6 +141,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: "delivery",
+    cover: "1526367790999-0150786686a2",
     name: "Order In Tonight",
     description: "Push delivery & takeaway — from kitchen to couch.",
     format: "9:16",
@@ -149,6 +159,7 @@ export const TEMPLATES: Template[] = [
   // ── Behind the scenes ────────────────────────────────────────────────────
   {
     id: "morning-open",
+    cover: "1453614512568-c4024d13c247",
     name: "Opening Up",
     description: "A calm 'day in the life' of opening the doors. Builds connection.",
     format: "9:16",
@@ -165,6 +176,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: "meet-the-team",
+    cover: "1581299894007-aaa50297cf16",
     name: "Meet the Team",
     description: "Put faces to the food — chef, barista or owner introductions.",
     format: "9:16",
@@ -180,6 +192,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: "farm-to-table",
+    cover: "1488459716781-31db52582fe9",
     name: "Farm to Table",
     description: "Show where your ingredients come from — local suppliers and sourcing.",
     format: "4:5",
@@ -197,6 +210,7 @@ export const TEMPLATES: Template[] = [
   // ── Events & seasons ─────────────────────────────────────────────────────
   {
     id: "weekend-brunch",
+    cover: "1567620905732-2d1ec7ab7445",
     name: "Weekend Brunch",
     description: "Lazy-Sunday energy: stacks, spritzes and slow mornings.",
     format: "9:16",
@@ -213,6 +227,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: "live-music",
+    cover: "1511671782779-c97d3d27a1d4",
     name: "Live Music Night",
     description: "Event promo with atmosphere — gigs, open mics, quiz nights.",
     format: "9:16",
@@ -228,6 +243,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: "seasonal-menu",
+    cover: "1461023058943-07fcbe16d735",
     name: "Seasonal Favourite",
     description: "Pumpkin spice, summer spritz or festive specials — swap the season.",
     format: "4:5",
@@ -243,6 +259,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: "grand-opening",
+    cover: "1501339847302-ac426a4a7cbb",
     name: "Grand Opening",
     description: "Build hype for a launch or new location.",
     format: "9:16",
@@ -261,6 +278,7 @@ export const TEMPLATES: Template[] = [
   // ── Social & reviews ─────────────────────────────────────────────────────
   {
     id: "reviews",
+    cover: "1533777857889-4be7c70b33f7",
     name: "What Regulars Say",
     description: "Turn your best reviews into social proof.",
     format: "4:5",
@@ -277,6 +295,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: "pov-order",
+    cover: "1534040385115-33dcb3acba5b",
     name: "POV: Your Order",
     description: "Trend-friendly first-person format — from walking in to first bite.",
     format: "9:16",
@@ -290,6 +309,173 @@ export const TEMPLATES: Template[] = [
       { title: "Bite", prompt: "First-person bite of {signature}, crumbs, slow motion, ultra appetising", script: "And now you get it.", style: "food-closeup", medium: "video", durationSec: 3 },
     ],
   },
+  // ── More formats ─────────────────────────────────────────────────────────
+  {
+    id: "dessert-pull",
+    cover: "1578985545062-69928b1d9587",
+    name: "Dessert Moment",
+    description: "One slow, indulgent slice — the dessert that sells itself.",
+    format: "9:16",
+    accent: "#9d174d",
+    category: "menu",
+    emoji: "🍰",
+    scenes: [
+      { title: "Tease", prompt: "Whole chocolate cake on a stand under warm light, glossy ganache dripping down the sides", script: "Saved room for dessert?", style: "food-closeup", medium: "image", durationSec: 3 },
+      { title: "Slice", prompt: "Knife slicing a cake slice and lifting it out to reveal soft layers, slow motion", script: "Good. Because this exists.", style: "food-closeup", medium: "video", durationSec: 4 },
+      { title: "Fork", prompt: "Fork pressing into the cake slice, crumbs and cream, macro", script: "Rich, soft, not too sweet.", style: "food-closeup", medium: "video", durationSec: 3 },
+      { title: "CTA", prompt: "Cake slice with a coffee on a café table by the window, cozy", script: "Treat yourself at {venue}.", style: "cozy-ambient", medium: "image", durationSec: 3 },
+    ],
+  },
+  {
+    id: "noodle-pull",
+    cover: "1569718212165-3a8278d5f624",
+    name: "The Noodle Pull",
+    description: "Steam, broth, chopsticks — the most satisfying shot in food video.",
+    format: "9:16",
+    accent: "#b45309",
+    category: "menu",
+    emoji: "🍜",
+    scenes: [
+      { title: "Steam", prompt: "Steaming bowl of ramen with broth, egg and chashu, dark moody background, steam rising", script: "Soup season is every season.", style: "food-closeup", medium: "video", durationSec: 3 },
+      { title: "Pull", prompt: "Chopsticks lifting springy noodles from the ramen bowl, slow motion, broth dripping", script: "Wait for it…", style: "food-closeup", medium: "video", durationSec: 4 },
+      { title: "Yolk", prompt: "Jammy soft-boiled egg sliced in half on top of ramen, macro", script: "Jammy egg, always.", style: "food-closeup", medium: "image", durationSec: 3 },
+      { title: "CTA", prompt: "Cozy restaurant counter with steaming bowls at night, warm pendant lights", script: "Slurp your way to {venue}.", style: "cozy-ambient", medium: "image", durationSec: 3 },
+    ],
+  },
+  {
+    id: "burger-drop",
+    cover: "1530554764233-e79e16c91d08",
+    name: "Burger Drop",
+    description: "Stack-it-up, layer-by-layer build for burgers, sandwiches and bao.",
+    format: "9:16",
+    accent: "#ca8a04",
+    category: "menu",
+    emoji: "🍔",
+    scenes: [
+      { title: "Drop", prompt: "Burger layers dropping onto each other in mid-air against a black background, slow motion burger stack", script: "Built layer by layer.", style: "cinematic", medium: "video", durationSec: 3 },
+      { title: "Sizzle", prompt: "Smash burger patty sizzling on a hot griddle, cheese melting, sparks of steam", script: "Smashed. Seared. Melted.", style: "food-closeup", medium: "video", durationSec: 3 },
+      { title: "Hero", prompt: "Two burgers with fries on a wooden board, rich lighting, glistening", script: "Meet your new favourite.", style: "food-closeup", medium: "image", durationSec: 3 },
+      { title: "CTA", prompt: "Friends grabbing burgers across a busy table, laughing, evening", script: "Burger night at {venue}.", style: "photographic", medium: "image", durationSec: 3 },
+    ],
+  },
+  {
+    id: "iced-drinks",
+    cover: "1551538827-9c037cb4f32a",
+    name: "Summer Drinks Menu",
+    description: "Ice, pours and colour — launch your cold drinks for the warm months.",
+    format: "9:16",
+    accent: "#0284c7",
+    category: "menu",
+    emoji: "🧊",
+    scenes: [
+      { title: "Ice", prompt: "Ice cubes dropping into a tall glass, splash, bright backlight", script: "Hot day? We've got you.", style: "food-closeup", medium: "video", durationSec: 2 },
+      { title: "Iced coffee", prompt: "Milk swirling into an iced coffee in a glass, slow motion marbling", script: "Iced coffee, done properly.", style: "food-closeup", medium: "video", durationSec: 3 },
+      { title: "Lemonade", prompt: "Pink lemonade and strawberry spritz glasses with lime and berries, bright and fresh", script: "Plus house lemonades.", style: "photographic", medium: "image", durationSec: 3 },
+      { title: "Pour", prompt: "Sparkling water poured into a mojito glass with lime and mint, refreshing", script: "Zero-proof spritzes too.", style: "food-closeup", medium: "video", durationSec: 3 },
+      { title: "CTA", prompt: "Sunny outdoor terrace with cold drinks on the table, summer", script: "Grab one on the terrace at {venue}.", style: "cozy-ambient", medium: "image", durationSec: 3 },
+    ],
+  },
+  {
+    id: "lunch-deal",
+    cover: "1546069901-ba9599a7e63c",
+    name: "Lunch Deal",
+    description: "Fast, clear weekday lunch promo — price-free so you can add your own.",
+    format: "4:5",
+    accent: "#059669",
+    category: "promo",
+    emoji: "🥗",
+    scenes: [
+      { title: "Hook", prompt: "Colourful poke bowl with salmon, avocado and greens, top-down, bright daylight", script: "Lunch break upgrade.", style: "food-closeup", medium: "image", durationSec: 3 },
+      { title: "Options", prompt: "Overhead of three lunch bowls and salads side by side on a wooden counter", script: "Pick a bowl, any bowl.", style: "flat-lay", medium: "image", durationSec: 3 },
+      { title: "Speed", prompt: "Takeaway bowl being handed over the counter, motion, friendly smile", script: "Ready in five minutes.", style: "photographic", medium: "video", durationSec: 3 },
+      { title: "CTA", prompt: "Busy café at lunchtime with people eating at shared tables", script: "Weekday lunch deal at {venue}.", style: "cozy-ambient", medium: "image", durationSec: 3 },
+    ],
+  },
+  {
+    id: "private-events",
+    cover: "1528605248644-14dd04022da1",
+    name: "Private Events & Catering",
+    description: "Pitch your space for birthdays, team lunches and parties.",
+    format: "16:9",
+    accent: "#7c3aed",
+    category: "promo",
+    emoji: "🥂",
+    scenes: [
+      { title: "Hook", prompt: "Long shared table full of friends laughing over dinner, candles and string lights", script: "Got something to celebrate?", style: "cinematic", medium: "image", durationSec: 3 },
+      { title: "Space", prompt: "Empty dining room set for a private party, tables dressed, warm evening lighting", script: "Book {venue} for your next event.", style: "cozy-ambient", medium: "image", durationSec: 4 },
+      { title: "Food", prompt: "Overhead of sharing platters and dishes laid out for a group", script: "Sharing menus for groups of any size.", style: "flat-lay", medium: "image", durationSec: 3 },
+      { title: "Cake", prompt: "Celebration cake being brought to the table, people cheering", script: "We'll handle the cake too.", style: "photographic", medium: "image", durationSec: 3 },
+      { title: "CTA", prompt: "Glasses raised in a toast across the table, joyful", script: "Enquire today — link in bio.", style: "cinematic", medium: "image", durationSec: 3 },
+    ],
+  },
+  {
+    id: "date-night",
+    cover: "1571877227200-a0d98ea607e9",
+    name: "Date Night",
+    description: "Candles, sharing plates, dessert for two — Valentine's or any Friday.",
+    format: "9:16",
+    accent: "#e11d48",
+    category: "events",
+    emoji: "🕯️",
+    scenes: [
+      { title: "Mood", prompt: "Candlelit table for two in a dim restaurant, wine glasses, soft bokeh", script: "Table for two?", style: "cinematic", medium: "image", durationSec: 3 },
+      { title: "Plates", prompt: "Elegant plated dish being set down between two people, chef's finishing touch", script: "Plates made for sharing.", style: "food-closeup", medium: "image", durationSec: 3 },
+      { title: "Drinks", prompt: "Cocktail being poured over a large ice cube, amber glow", script: "A drink to start.", style: "food-closeup", medium: "video", durationSec: 3 },
+      { title: "Dessert", prompt: "Tiramisu with two spoons on a candlelit table", script: "And one dessert. Two spoons.", style: "food-closeup", medium: "image", durationSec: 3 },
+      { title: "CTA", prompt: "Cozy evening dining room glowing with candles", script: "Book date night at {venue}.", style: "cozy-ambient", medium: "image", durationSec: 3 },
+    ],
+  },
+  {
+    id: "festive",
+    cover: "1558961363-fa8fdf82db35",
+    name: "Festive Treats",
+    description: "Holiday menu, gift boxes and cosy vibes for the festive season.",
+    format: "4:5",
+    accent: "#15803d",
+    category: "events",
+    emoji: "🎄",
+    scenes: [
+      { title: "Cosy", prompt: "Café window with fairy lights and a steaming hot chocolate, wintery evening", script: "The festive menu is here.", style: "cozy-ambient", medium: "image", durationSec: 3 },
+      { title: "Treats", prompt: "Basket of fresh chocolate chip cookies and festive bakes, warm light", script: "Festive bakes, all month.", style: "food-closeup", medium: "image", durationSec: 3 },
+      { title: "Gift box", prompt: "Hands tying a ribbon on a box of cookies and pastries, gift wrapping", script: "Gift boxes to take home.", style: "photographic", medium: "video", durationSec: 3 },
+      { title: "CTA", prompt: "Overhead of festive drinks and treats on a table with greenery", script: "Pre-order yours at {venue}.", style: "flat-lay", medium: "image", durationSec: 3 },
+    ],
+  },
+  {
+    id: "menu-ranking",
+    cover: "1504674900247-0877df9cc836",
+    name: "Rating Our Menu",
+    description: "Trend format: staff rate menu items out of 10. Highly shareable.",
+    format: "9:16",
+    accent: "#ea580c",
+    category: "social",
+    emoji: "🔟",
+    scenes: [
+      { title: "Hook", prompt: "Overhead of several plates from the menu laid out on a table, ready to be judged", script: "Rating every item on our menu…", style: "flat-lay", medium: "image", durationSec: 3 },
+      { title: "Item 1", prompt: "Close-up of a breakfast plate with eggs and toast, fork lifting a bite", script: "Breakfast plate: solid 8.", style: "food-closeup", medium: "image", durationSec: 3 },
+      { title: "Item 2", prompt: "Close-up of a dessert slice, cream and berries", script: "Dessert: 9, no notes.", style: "food-closeup", medium: "image", durationSec: 3 },
+      { title: "Winner", prompt: "Hero shot of {signature} under a spotlight, glistening", script: "{signature}: 11/10. Obviously.", style: "food-closeup", medium: "image", durationSec: 3 },
+      { title: "CTA", prompt: "Staff laughing behind the counter of the café", script: "Disagree? Come argue with us at {venue}.", style: "photographic", medium: "image", durationSec: 3 },
+    ],
+  },
+  {
+    id: "this-or-that",
+    cover: "1551024601-bec78aea704b",
+    name: "This or That",
+    description: "Comment-bait split choices: sweet vs savoury, iced vs hot.",
+    format: "9:16",
+    accent: "#2563eb",
+    category: "social",
+    emoji: "🤔",
+    scenes: [
+      { title: "Hook", prompt: "Two dishes side by side on a marble counter, one sweet one savoury, bright light", script: "You can only pick one.", style: "photographic", medium: "image", durationSec: 2 },
+      { title: "Round 1", prompt: "Glazed donuts with sprinkles next to a croissant, close-up", script: "Donut or croissant?", style: "food-closeup", medium: "image", durationSec: 3 },
+      { title: "Round 2", prompt: "Iced coffee in a glass next to a hot latte with latte art", script: "Iced or hot?", style: "food-closeup", medium: "image", durationSec: 3 },
+      { title: "Round 3", prompt: "Stack of pancakes next to avocado toast with a poached egg", script: "Pancakes or avo toast?", style: "food-closeup", medium: "image", durationSec: 3 },
+      { title: "CTA", prompt: "Busy café table with all the dishes shared between friends", script: "Comment your picks — or get both at {venue}.", style: "cozy-ambient", medium: "image", durationSec: 3 },
+    ],
+  },
+
 ];
 
 /** A copy of a template with venue tokens filled in, ready to create from. */
@@ -304,5 +490,50 @@ export function personalizeTemplate(template: Template, venue?: VenueProfile): T
       prompt: personalize(s.prompt, venue),
       script: personalize(s.script, venue),
     })),
+  };
+}
+
+type TemplateScene = Template["scenes"][number];
+
+/**
+ * The pre-generated still for a template scene: the curated photo the preview
+ * provider would pick for it, cropped to the template's format. Illustration
+ * looks get none (they're generated on demand).
+ */
+export function previewStillFor(
+  scene: TemplateScene,
+  format: AspectRatio,
+  avoid: string[] = [],
+): { id: string; url: string } | undefined {
+  if (NON_PHOTO_STYLES.includes(scene.style)) return undefined;
+  const id = pickPhoto(`${scene.title} ${scene.prompt}`, { style: scene.style, avoid });
+  return { id, url: photoUrlForAspect(id, format) };
+}
+
+/** Pre-generated video clips (e.g. Match Ya), keyed by template id → scene index. */
+const MEDIA = exampleMedia as Record<string, Record<string, { url: string; posterUrl?: string }>>;
+
+/**
+ * Attach pre-generated assets so a storyboard created from this template opens
+ * with every scene already filled in: stored video clips where we have them
+ * (scripts/pregenerate-examples.ts), else the matched preview still.
+ */
+export function withPreviewAssets(template: Template): Template {
+  const clips = MEDIA[template.id] ?? {};
+  const used: string[] = [];
+  return {
+    ...template,
+    scenes: template.scenes.map((scene, i) => {
+      if (scene.asset) return scene;
+      const clip = clips[String(i)];
+      if (clip) {
+        const asset: GeneratedAsset = { ...clip, medium: "video", providerId: "veo", createdAt: Date.now() };
+        return { ...scene, asset };
+      }
+      const still = previewStillFor(scene, template.format, used);
+      if (!still) return scene;
+      used.push(still.id);
+      return { ...scene, asset: { url: still.url, medium: "image", providerId: "mock", createdAt: Date.now() } };
+    }),
   };
 }

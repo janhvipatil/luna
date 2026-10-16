@@ -103,5 +103,12 @@ export interface Template {
   category?: TemplateCategory;
   /** Emoji shown on the template card. */
   emoji?: string;
-  scenes: Array<Pick<Scene, "title" | "prompt" | "script" | "style" | "medium" | "durationSec">>;
+  /** Cover photo id from lib/photos (falls back to a match on the first scene). */
+  cover?: string;
+  scenes: Array<
+    Pick<Scene, "title" | "prompt" | "script" | "style" | "medium" | "durationSec"> & {
+      /** Pre-generated asset the scene starts with (see lib/templates). */
+      asset?: GeneratedAsset;
+    }
+  >;
 }

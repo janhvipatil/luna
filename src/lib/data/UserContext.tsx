@@ -3,6 +3,7 @@
 import { createContext, useContext } from "react";
 import type { ProfileRow } from "@/lib/supabase/types";
 import { parseBrandKit, type BrandKit } from "@/lib/brand";
+import type { AiStatus } from "@/lib/ai/context";
 
 export interface SessionUser {
   id: string;
@@ -12,6 +13,8 @@ export interface SessionUser {
 export interface UserContextValue {
   user: SessionUser;
   profile: ProfileRow | null;
+  /** Bring-your-own-key status (a hint only — the key never reaches the browser). */
+  ai: AiStatus;
 }
 
 const UserContext = createContext<UserContextValue | null>(null);
@@ -37,6 +40,12 @@ export function useUser(): UserContextValue {
 export function useBrandKit(): BrandKit {
   const ctx = useContext(UserContext);
   return parseBrandKit(ctx?.profile?.brand_kit);
+}
+
+/** The signed-in user's AI connection status (no key → not connected). */
+export function useAiStatus(): AiStatus {
+  const ctx = useContext(UserContext);
+  return ctx?.ai ?? { geminiConnected: false, geminiKeyHint: null, geminiImages: false, videoTier: "fast" };
 }
 
 /** Best display name: profile name → email local-part. */

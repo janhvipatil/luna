@@ -9,14 +9,19 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="absolute right-4 top-4">
         <ThemeToggle />
       </div>
-      <Link href="/" className="mb-8">
+      <Link href="/welcome" className="mb-8">
         <Logo size={36} />
       </Link>
       <div className="w-full max-w-sm">{children}</div>
       <p className="mt-8 max-w-sm text-center text-xs leading-relaxed text-muted">
-        Luna turns your café or restaurant into scroll-stopping Reels and
-        TikToks — pick a template, tweak the shots, generate every scene.
+        Turn an idea into short-form video, one scene at a time — made for
+        cafés and restaurants.
       </p>
+      <nav className="mt-3 flex gap-4 text-xs text-muted">
+        <Link href="/pricing" className="hover:text-foreground">Pricing</Link>
+        <Link href="/terms" className="hover:text-foreground">Terms</Link>
+        <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
+      </nav>
     </div>
   );
 }

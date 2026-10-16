@@ -18,6 +18,7 @@ export const EXAMPLE_VENUE: VenueProfile = {
 export const EXAMPLE_STORYBOARDS: Template[] = [
   {
     id: "matchya-whisk",
+    cover: "1515823064-d6e0c04616a7",
     name: "Match Ya · The Whisk Ritual",
     description: "ASMR matcha prep — sift, whisk, pour. Match Ya's signature in 16 seconds.",
     format: "9:16",
@@ -34,6 +35,7 @@ export const EXAMPLE_STORYBOARDS: Template[] = [
   },
   {
     id: "matchya-ramen",
+    cover: "1557872943-16a5ac26437e",
     name: "Match Ya · Ramen After Dark",
     description: "Evening menu reveal — the café turns into a cosy ramen bar.",
     format: "9:16",
@@ -50,6 +52,7 @@ export const EXAMPLE_STORYBOARDS: Template[] = [
   },
   {
     id: "matchya-onigiri",
+    cover: "1611143669185-af224c5e3252",
     name: "Match Ya · Onigiri Lunch Set",
     description: "Quick, bright lunch-deal promo for the onigiri counter.",
     format: "4:5",
@@ -65,6 +68,7 @@ export const EXAMPLE_STORYBOARDS: Template[] = [
   },
   {
     id: "matchya-bakes",
+    cover: "1495147466023-ac5c588e2e94",
     name: "Match Ya · Matcha Bake Counter",
     description: "The dessert & bakery case — matcha everything.",
     format: "9:16",

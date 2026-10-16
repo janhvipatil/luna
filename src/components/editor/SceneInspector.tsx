@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { AudioLines, Check, Copy, Dices, Film, ImageIcon, Layers, Lock, Minus, Plus, Trash2, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { AudioLines, Check, Copy, Dices, Film, ImageIcon, Layers, Lock, Minus, Plus, Trash2, Upload, X } from "lucide-react";
 import type { Scene, SceneMedium, VisualStyle } from "@/lib/types";
 import { Button, Input, Label, Spinner, Textarea } from "@/components/ui";
 import { VISUAL_STYLES } from "@/lib/constants";
 import { CAPTION_PRESETS, SHOT_IDEAS } from "@/lib/presets";
 import { personalize } from "@/lib/venue";
-import { useBrandKit } from "@/lib/data/UserContext";
+import { useBrandKit, useUser } from "@/lib/data/UserContext";
+import { createClient } from "@/lib/supabase/client";
+import { startFrameFor } from "@/lib/pollJob";
+import { AssetThumb } from "@/components/AssetThumb";
 import { useLunaStore } from "@/lib/store";
 import { cn, fitDurationToAudio, getAudioDuration, isVideoUrl } from "@/lib/utils";
 
@@ -36,6 +39,46 @@ export function SceneInspector({
   const patch = (p: Partial<Scene>) => updateScene(storyboardId, scene.id, p);
   const { venue } = useBrandKit();
   const [captionsOpen, setCaptionsOpen] = useState(false);
+  const startFrame = startFrameFor(scene);
+  const { user } = useUser();
+  const setSceneAsset = useLunaStore((s) => s.setSceneAsset);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string>();
+
+  /** Upload a real photo as this scene's still (and Veo's start frame). */
+  async function uploadPhoto(file: File) {
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      setUploadError("Use a JPEG or PNG photo.");
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      setUploadError("That photo is over 15 MB — try a smaller one.");
+      return;
+    }
+    setUploading(true);
+    setUploadError(undefined);
+    try {
+      const supabase = createClient();
+      const ext = file.type === "image/png" ? "png" : "jpg";
+      const path = `${user.id}/${storyboardId}/${scene.id}-upload-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("assets")
+        .upload(path, file, { contentType: file.type });
+      if (error) throw error;
+      const url = supabase.storage.from("assets").getPublicUrl(path).data.publicUrl;
+      setSceneAsset(storyboardId, scene.id, {
+        url,
+        medium: "image",
+        providerId: "upload",
+        createdAt: Date.now(),
+      });
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   function addShotIdea(text: string) {
     const base = scene.prompt.trim().replace(/[.,]$/, "");
@@ -242,6 +285,49 @@ export function SceneInspector({
               </button>
             ))}
           </div>
+
+          {/* Start frame: what a video scene animates (image-to-video). */}
+          {scene.medium === "video" && (
+            <div className="mt-2 flex items-center gap-2 rounded-lg border border-border bg-surface-2 p-2">
+              {startFrame ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={startFrame} alt="Start frame" className="h-10 w-10 rounded object-cover" />
+                  <p className="text-[11px] leading-snug text-muted">
+                    Veo animates this still. Upload a photo to animate your real dish instead.
+                  </p>
+                </>
+              ) : (
+                <p className="text-[11px] leading-snug text-muted">
+                  Generated from the prompt. Tip: upload a photo of the real dish (or generate an
+                  image first) and Veo will animate it.
+                </p>
+              )}
+            </div>
+          )}
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void uploadPhoto(file);
+              e.target.value = "";
+            }}
+          />
+          <Button
+            variant="secondary"
+            size="sm"
+            className="mt-2 w-full"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading ? <Spinner className="h-3.5 w-3.5" /> : <Upload className="h-3.5 w-3.5" />}
+            Use my photo
+          </Button>
+          {uploadError && <p className="mt-1 text-[11px] text-danger">{uploadError}</p>}
         </div>
 
         {/* Style */}
@@ -350,12 +436,7 @@ export function SceneInspector({
                     )}
                     title={active ? "Current take" : "Use this take"}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={take.posterUrl ?? take.url}
-                      alt={`Take ${i + 1}`}
-                      className="h-full w-full object-cover"
-                    />
+                    <AssetThumb asset={take} alt={`Take ${i + 1}`} />
                     {isVideoUrl(take.url) && (
                       <Film className="absolute right-0.5 top-0.5 h-3 w-3 text-white drop-shadow" />
                     )}

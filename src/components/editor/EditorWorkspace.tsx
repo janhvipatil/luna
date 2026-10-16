@@ -73,8 +73,11 @@ export function EditorWorkspace({ storyboard }: { storyboard: Storyboard }) {
   }, [selectedScene, generateScene, addScene, storyboard.id, storyboard.scenes.length]);
 
   return (
-    <>
+    // On desktop the editor fills exactly one screen so the inspector and
+    // timeline can scroll independently instead of growing the page.
+    <div className="flex flex-1 flex-col lg:h-dvh lg:flex-none lg:overflow-hidden">
       <AppHeader
+        className="shrink-0"
         left={
           <>
             <Link
@@ -138,9 +141,10 @@ export function EditorWorkspace({ storyboard }: { storyboard: Storyboard }) {
       )}
       {shareOpen && <ShareModal storyboard={storyboard} onClose={() => setShareOpen(false)} />}
 
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-          <div className="min-h-0 min-w-0 flex-1">
+      {/* Preview + timeline on the left; the inspector is a full-height sidebar. */}
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 overflow-y-auto">
             {selectedScene ? (
               <ScenePreview
                 scene={selectedScene}
@@ -154,25 +158,25 @@ export function EditorWorkspace({ storyboard }: { storyboard: Storyboard }) {
             )}
           </div>
 
-          <aside className="shrink-0 border-t border-border bg-surface/40 lg:w-[340px] lg:border-l lg:border-t-0">
-            {selectedScene ? (
-              <SceneInspector
-                scene={selectedScene}
-                storyboardId={storyboard.id}
-                sceneNumber={sceneNumber}
-                onDeleted={() => setSelectedId(null)}
-                onDuplicated={(id) => setSelectedId(id)}
-              />
-            ) : null}
-          </aside>
+          <SceneStrip
+            storyboard={storyboard}
+            selectedId={selectedScene?.id ?? null}
+            onSelect={setSelectedId}
+          />
         </div>
 
-        <SceneStrip
-          storyboard={storyboard}
-          selectedId={selectedScene?.id ?? null}
-          onSelect={setSelectedId}
-        />
+        <aside className="shrink-0 border-t border-border bg-surface/40 lg:min-h-0 lg:w-[340px] lg:border-l lg:border-t-0">
+          {selectedScene ? (
+            <SceneInspector
+              scene={selectedScene}
+              storyboardId={storyboard.id}
+              sceneNumber={sceneNumber}
+              onDeleted={() => setSelectedId(null)}
+              onDuplicated={(id) => setSelectedId(id)}
+            />
+          ) : null}
+        </aside>
       </div>
-    </>
+    </div>
   );
 }

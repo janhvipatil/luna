@@ -15,9 +15,16 @@ export function ProviderStatusChip() {
   const providerId = useLunaStore((s) => s.providerId);
   const [open, setOpen] = useState(false);
 
+  const isAuto = providerId === "auto";
   const active = providers.find((p) => p.id === providerId);
-  const label = mounted ? active?.name ?? "Backend" : "Backend";
-  const connected = active?.configured ?? true;
+  // In auto mode, name the video backend — that's the one people care about.
+  const autoVideo = providers.find((p) => p.id !== "mock" && p.configured && p.capabilities.video);
+  const label = !mounted
+    ? "Backend"
+    : isAuto
+      ? `Auto · ${autoVideo?.name.replace(/^Google /, "") ?? "Preview"}`
+      : (active?.name ?? "Backend");
+  const connected = isAuto ? true : (active?.configured ?? true);
 
   return (
     <>

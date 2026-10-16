@@ -4,15 +4,18 @@ import type { DraftRequest } from "@/lib/draft/types";
 import { draftFromTemplate } from "@/lib/draft/fallback";
 import { draftWithClaude, isClaudeConfigured } from "@/lib/draft/claude";
 import { parseVenue } from "@/lib/venue";
+import { draftWithGemini } from "@/lib/draft/gemini";
+import { createClient } from "@/lib/supabase/server";
+import { getAiContext } from "@/lib/ai/context";
 
 export const maxDuration = 60;
 
 const VALID_ASPECTS: AspectRatio[] = ["9:16", "1:1", "16:9", "4:5"];
 
 /**
- * Drafts a full storyboard from a brief. Uses Claude when ANTHROPIC_API_KEY is
- * set; otherwise falls back to a deterministic template so the feature always
- * works. Reports which path produced the result.
+ * Drafts a full storyboard from a brief: Gemini on the user's own key, else
+ * Claude when ANTHROPIC_API_KEY is set, else a deterministic template so the
+ * feature always works. Reports which path produced the result.
  */
 export async function POST(request: Request) {
   let body: Partial<DraftRequest>;
@@ -34,6 +37,26 @@ export async function POST(request: Request) {
   const venue = parseVenue(body.venue);
 
   const req: DraftRequest = { brief: brief.slice(0, 1000), format, tone, venue };
+
+  // The user's own Gemini key first, then the operator's Claude key, then a
+  // deterministic template — drafting always works.
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const ctx = await getAiContext(supabase, user?.id);
+  if (ctx.geminiKey) {
+    try {
+      const storyboard = await draftWithGemini(req, ctx.geminiKey);
+      return NextResponse.json({ storyboard, source: "gemini" });
+    } catch (err) {
+      console.error("Gemini draft failed:", err);
+      if (!isClaudeConfigured()) {
+        const message = err instanceof Error ? err.message : "Drafting failed.";
+        return NextResponse.json({ storyboard: draftFromTemplate(req), source: "template", warning: message });
+      }
+    }
+  }
 
   if (isClaudeConfigured()) {
     try {

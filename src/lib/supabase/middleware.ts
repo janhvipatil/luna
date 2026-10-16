@@ -3,7 +3,18 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "./types";
 
 /** Paths that don't require a session. */
-const PUBLIC_PREFIXES = ["/login", "/signup", "/auth", "/share", "/api/providers"];
+const PUBLIC_PREFIXES = [
+  "/login",
+  "/signup",
+  "/auth",
+  "/share",
+  "/api/providers",
+  // Public marketing site.
+  "/welcome",
+  "/pricing",
+  "/terms",
+  "/privacy",
+];
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -44,6 +55,13 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   const claims = data?.claims ?? null;
 
   const { pathname } = request.nextUrl;
+
+  // Signed-out visitors to the home page see the landing page, not a login wall.
+  if (!claims && pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/welcome";
+    return NextResponse.redirect(url);
+  }
 
   if (!claims && !isPublic(pathname)) {
     const url = request.nextUrl.clone();

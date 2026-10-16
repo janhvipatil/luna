@@ -21,9 +21,10 @@ export function Logo({
         className="shrink-0"
       >
         <defs>
-          <linearGradient id="luna-moon" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#a78bfa" />
-            <stop offset="100%" stopColor="#6366f1" />
+          <linearGradient id="luna-moon" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#f4a7bb" />
+            <stop offset="55%" stopColor="#e8738f" />
+            <stop offset="100%" stopColor="#8fb069" />
           </linearGradient>
         </defs>
         <circle cx="16" cy="16" r="15" fill="url(#luna-moon)" opacity="0.18" />

@@ -4,9 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { Clapperboard, Clock, Copy, MoreVertical, Trash2 } from "lucide-react";
 import type { Storyboard } from "@/lib/types";
-import { Badge, Card } from "@/components/ui";
+import { Card } from "@/components/ui";
 import { useLunaStore } from "@/lib/store";
 import { formatDuration, timeAgo } from "@/lib/utils";
+import { photoUrl, pickPhoto } from "@/lib/photos";
+import { AssetThumb } from "@/components/AssetThumb";
 
 export function StoryboardCard({ storyboard }: { storyboard: Storyboard }) {
   const duplicate = useLunaStore((s) => s.duplicateStoryboard);
@@ -15,31 +17,37 @@ export function StoryboardCard({ storyboard }: { storyboard: Storyboard }) {
 
   const totalDuration = storyboard.scenes.reduce((sum, s) => sum + s.durationSec, 0);
   const readyScenes = storyboard.scenes.filter((s) => s.status === "ready");
-  const thumbs = readyScenes.slice(0, 3).map((s) => s.asset?.url);
+  const thumbs = readyScenes.slice(0, 3).flatMap((s) => (s.asset ? [s.asset] : []));
+  // Before anything is generated, show a photo matched to the opening scene.
+  const cover = photoUrl(
+    pickPhoto(`${storyboard.scenes[0]?.prompt ?? ""} ${storyboard.title}`),
+    640,
+    256,
+  );
 
   return (
     <Card className="group relative overflow-hidden transition-colors hover:border-border-strong">
       <Link href={`/storyboard/${storyboard.id}`} className="block">
-        {/* Preview strip: real frames if any exist, else a gradient placeholder. */}
+        {/* Preview strip: real frames if any exist, else a matched cover photo. */}
         <div className="relative flex h-32 gap-0.5 bg-surface-2 p-0.5">
           {thumbs.length > 0 ? (
-            thumbs.map((url, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={i}
-                src={url}
-                alt=""
-                className="h-full flex-1 rounded-md object-cover"
-              />
+            thumbs.map((asset, i) => (
+              <div key={i} className="h-full flex-1 overflow-hidden rounded-md">
+                <AssetThumb asset={asset} />
+              </div>
             ))
           ) : (
-            <div className="flex h-full w-full items-center justify-center rounded-md bg-gradient-to-br from-accent/20 to-surface-3">
-              <Clapperboard className="h-7 w-7 text-accent-strong/70" />
-            </div>
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={cover}
+              alt=""
+              loading="lazy"
+              className="h-full w-full rounded-md object-cover opacity-90"
+            />
           )}
-          <div className="absolute left-2 top-2">
-            <Badge tone="accent">{storyboard.format}</Badge>
-          </div>
+          <span className="absolute left-2 top-2 rounded-md bg-black/40 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+            {storyboard.format}
+          </span>
         </div>
 
         <div className="p-4">

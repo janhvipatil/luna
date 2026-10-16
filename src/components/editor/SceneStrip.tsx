@@ -87,10 +87,10 @@ export function SceneStrip({
             const newId = addScene(storyboard.id, last);
             if (newId) onSelect(newId);
           }}
-          className="flex h-full min-h-[7rem] w-28 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border-strong text-muted transition-colors hover:border-accent hover:text-accent-strong"
+          className="flex h-full min-h-[7rem] w-[4.5rem] shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border-strong text-muted transition-colors hover:border-accent hover:text-accent-strong"
         >
           <Plus className="h-5 w-5" />
-          <span className="text-[11px]">Add scene</span>
+          <span className="text-[10px]">Add</span>
         </button>
       </div>
     </div>

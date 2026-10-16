@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { generate, resolveProvider } from "@/lib/providers";
+import { resolveProvider } from "@/lib/providers";
 import { ProviderNotConfiguredError } from "@/lib/providers/types";
 import type { GenerationRequest } from "@/lib/providers";
 import type { AspectRatio, SceneMedium, VisualStyle } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 import { storeAsset } from "@/lib/data/storeAsset";
+import { getAiContext } from "@/lib/ai/context";
 
 // Video generations can run for minutes; allow the function room to finish.
 // (On Vercel this requires Fluid compute, which is on by default.)
@@ -32,8 +33,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const { prompt, style, medium, aspect, sceneTitle, seed, providerId, storyboardId, sceneId } =
-    body;
+  const {
+    prompt,
+    style,
+    medium,
+    aspect,
+    sceneTitle,
+    seed,
+    durationSec,
+    startImageUrl,
+    providerId,
+    storyboardId,
+    sceneId,
+  } = body;
 
   if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
     return NextResponse.json({ error: "A prompt is required." }, { status: 400 });
@@ -52,12 +64,20 @@ export async function POST(request: Request) {
     aspect,
     sceneTitle: sceneTitle?.slice(0, 120),
     seed: typeof seed === "number" ? seed : undefined,
+    durationSec: typeof durationSec === "number" ? durationSec : undefined,
+    startImageUrl:
+      typeof startImageUrl === "string" && /^https:\/\//.test(startImageUrl)
+        ? startImageUrl
+        : undefined,
   };
-
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // The user's own keys (bring-your-own-key) decide which providers can run.
+  const ctx = await getAiContext(supabase, user?.id);
+  const provider = resolveProvider(providerId, req, ctx);
 
   // Record a durable job so a generation that finishes after the client
   // disconnects isn't lost — the client reconciles ready jobs on next load.
@@ -72,10 +92,42 @@ export async function POST(request: Request) {
     jobId = job?.id ?? null;
   }
 
+  // Long-running providers (Veo): start the job and let the client poll
+  // /api/generate/jobs/[id]. Requires a job row to hold the operation.
+  if (provider.start) {
+    if (!jobId) {
+      return NextResponse.json(
+        { error: "Sign in and open a storyboard to generate video." },
+        { status: 401 },
+      );
+    }
+    try {
+      const { operation } = await provider.start(req, ctx);
+      await supabase
+        .from("generation_jobs")
+        // The start frame (if any) doubles as the clip's poster/thumbnail.
+        .update({
+          status: "pending",
+          provider_id: provider.id,
+          operation,
+          result: req.startImageUrl ? { posterUrl: req.startImageUrl } : null,
+        })
+        .eq("id", jobId);
+      return NextResponse.json(
+        { pending: true, jobId, resolvedProviderId: provider.id },
+        { status: 202 },
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Generation failed.";
+      await supabase.from("generation_jobs").update({ status: "error", error: message }).eq("id", jobId);
+      const status = err instanceof ProviderNotConfiguredError ? 422 : 502;
+      return NextResponse.json({ error: message }, { status });
+    }
+  }
+
   try {
-    const result = await generate(providerId, req);
-    // Report which provider actually ran, in case of fallback.
-    const resolved = resolveProvider(providerId, req);
+    const result = await provider.generate(req, ctx);
+    const resolved = provider;
 
     // Re-host the asset in Supabase Storage so it survives (provider URLs can
     // expire) and doesn't bloat the storyboard row. Best-effort: if storage

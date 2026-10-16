@@ -99,7 +99,7 @@ export const useLunaStore = create<LunaState>()((set, get) => ({
       storyboards: {},
       hydrated: false,
       saveStatus: "idle",
-      providerId: "mock",
+      providerId: "auto",
 
       hydrate: (list) =>
         set({
@@ -135,7 +135,10 @@ export const useLunaStore = create<LunaState>()((set, get) => ({
           title: titleOverride?.trim() || template.name,
           description: template.description,
           format: template.format,
-          scenes: template.scenes.map((s) => newScene(s)),
+          // Pre-generated assets arrive ready, with the asset as the first take.
+          scenes: template.scenes.map((s) =>
+            newScene(s.asset ? { ...s, status: "ready", takes: [s.asset] } : s),
+          ),
           isShared: false,
           createdAt: now,
           updatedAt: now,

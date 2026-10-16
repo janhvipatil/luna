@@ -16,16 +16,58 @@ export function ProviderSettingsModal({ open, onClose }: { open: boolean; onClos
   const { providers, loading } = useProviders();
   const selected = useLunaStore((s) => s.providerId);
   const setProviderId = useLunaStore((s) => s.setProviderId);
+  // What "Automatic" resolves to (mirrors resolveProvider on the server).
+  const firstReal = (kind: "image" | "video") =>
+    providers.find((p) => p.id !== "mock" && p.configured && p.capabilities[kind]) ??
+    providers.find((p) => p.id === "mock");
+  const autoVideo = firstReal("video");
+  const autoImage = firstReal("image");
 
   return (
     <Modal
       open={open}
       onClose={onClose}
       title="Generation backend"
-      description="Luna orchestrates the model — pick which one runs your scenes. Connect a real backend with environment variables."
+      description="Luna orchestrates the model — pick which one runs your scenes. Gemini features run on your own key (Profile → Gemini)."
     >
       <div className="space-y-2">
         {loading && <div className="h-20 rounded-lg luna-shimmer" />}
+
+        {!loading && (
+          <button
+            onClick={() => {
+              setProviderId("auto");
+              onClose();
+            }}
+            className={cn(
+              "w-full rounded-lg border p-3 text-left transition-colors",
+              selected === "auto"
+                ? "border-accent bg-accent-soft"
+                : "border-border bg-surface-2 hover:border-border-strong",
+            )}
+          >
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5">
+                {selected === "auto" ? (
+                  <Check className="h-4 w-4 text-accent-strong" />
+                ) : (
+                  <CircleDot className="h-4 w-4 text-muted" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-foreground">Automatic</span>
+                  <Badge tone="accent">Recommended</Badge>
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-muted">
+                  {autoVideo?.id === "mock" && autoImage?.id === "mock"
+                    ? "Every scene uses free matched photos for now. Connect your Gemini key in Profile to generate real video."
+                    : `Picks the best connected backend for each scene — video goes to ${autoVideo?.name}, stills to ${autoImage?.name}.`}
+                </p>
+              </div>
+            </div>
+          </button>
+        )}
 
         {providers.map((p) => {
           const active = p.id === selected;

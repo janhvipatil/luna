@@ -43,11 +43,43 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_ai_settings: {
+        Row: {
+          created_at: string;
+          gemini_images: boolean;
+          gemini_key_encrypted: string | null;
+          gemini_key_hint: string | null;
+          updated_at: string;
+          user_id: string;
+          video_model: string;
+        };
+        Insert: {
+          created_at?: string;
+          gemini_images?: boolean;
+          gemini_key_encrypted?: string | null;
+          gemini_key_hint?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          video_model?: string;
+        };
+        Update: {
+          created_at?: string;
+          gemini_images?: boolean;
+          gemini_key_encrypted?: string | null;
+          gemini_key_hint?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          video_model?: string;
+        };
+        Relationships: [];
+      };
       generation_jobs: {
         Row: {
           created_at: string;
           error: string | null;
           id: string;
+          operation: string | null;
+          provider_id: string | null;
           result: Json | null;
           scene_id: string;
           status: string;
@@ -59,6 +91,8 @@ export type Database = {
           created_at?: string;
           error?: string | null;
           id?: string;
+          operation?: string | null;
+          provider_id?: string | null;
           result?: Json | null;
           scene_id: string;
           status?: string;
@@ -70,6 +104,8 @@ export type Database = {
           created_at?: string;
           error?: string | null;
           id?: string;
+          operation?: string | null;
+          provider_id?: string | null;
           result?: Json | null;
           scene_id?: string;
           status?: string;

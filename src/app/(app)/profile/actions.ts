@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { parseVenue } from "@/lib/venue";
 import type { Json } from "@/lib/supabase/types";
+import { encryptSecret, secretHint } from "@/lib/ai/secrets";
+import { verifyGeminiKey } from "@/lib/ai/gemini";
 
 export interface ProfileFormState {
   ok?: boolean;
@@ -133,4 +135,91 @@ export async function updatePassword(
   if (error) return { error: error.message };
 
   return { ok: true, message: "Password updated." };
+}
+
+/**
+ * Connect (or replace) the user's own Gemini API key. The key is checked
+ * against the Gemini API, encrypted, and stored; only a hint is kept readable.
+ */
+export async function saveGeminiKey(
+  _prev: ProfileFormState,
+  formData: FormData,
+): Promise<ProfileFormState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You're signed out." };
+
+  const key = String(formData.get("gemini_key") ?? "").trim();
+  if (!key) return { error: "Paste your Gemini API key." };
+  if (!/^[\w-]{20,200}$/.test(key)) return { error: "That doesn't look like a Gemini API key." };
+
+  try {
+    await verifyGeminiKey(key);
+  } catch (err) {
+    const status = (err as { status?: number }).status;
+    if (status === 400 || status === 401 || status === 403) {
+      return { error: "Google rejected that key — check you copied the whole key from AI Studio." };
+    }
+    return { error: err instanceof Error ? err.message : "Couldn't reach Gemini to check the key." };
+  }
+
+  let encrypted: string;
+  try {
+    encrypted = encryptSecret(key);
+  } catch (err) {
+    console.error("Key encryption unavailable:", err);
+    return { error: "The server can't store keys yet (APP_ENCRYPTION_KEY is missing)." };
+  }
+
+  const { error } = await supabase.from("user_ai_settings").upsert({
+    user_id: user.id,
+    gemini_key_encrypted: encrypted,
+    gemini_key_hint: secretHint(key),
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Gemini connected — drafts, voiceovers and video now run on your key." };
+}
+
+export async function removeGeminiKey(): Promise<ProfileFormState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You're signed out." };
+
+  const { error } = await supabase
+    .from("user_ai_settings")
+    .update({ gemini_key_encrypted: null, gemini_key_hint: null, gemini_images: false })
+    .eq("user_id", user.id);
+  if (error) return { error: error.message };
+
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Gemini key removed." };
+}
+
+export async function updateAiPreferences(
+  _prev: ProfileFormState,
+  formData: FormData,
+): Promise<ProfileFormState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You're signed out." };
+
+  const tier = String(formData.get("video_model") ?? "fast");
+  const video_model = ["lite", "fast", "standard"].includes(tier) ? tier : "fast";
+  const gemini_images = formData.get("gemini_images") === "on";
+
+  const { error } = await supabase
+    .from("user_ai_settings")
+    .upsert({ user_id: user.id, video_model, gemini_images });
+  if (error) return { error: error.message };
+
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Preferences saved." };
 }

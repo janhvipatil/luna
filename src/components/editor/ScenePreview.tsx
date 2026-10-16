@@ -25,9 +25,13 @@ export function ScenePreview({
   const hasAsset = Boolean(scene.asset);
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 p-6">
-      <div className="w-full max-w-[min(46vh,420px)]">
-        <AspectFrame ratio={storyboard.format} className="w-full shadow-2xl">
+    <div className="flex h-full min-h-[24rem] flex-col items-center justify-center gap-4 p-6">
+      {/* Size the frame by the available height so it never spills under the timeline. */}
+      <div className="flex min-h-0 w-full flex-1 items-center justify-center">
+        <AspectFrame
+          ratio={storyboard.format}
+          className="h-full max-h-[44rem] w-auto max-w-full shadow-xl"
+        >
           {scene.asset ? (
             isVideoUrl(scene.asset.url) ? (
               <video

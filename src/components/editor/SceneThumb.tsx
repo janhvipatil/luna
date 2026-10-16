@@ -5,6 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Film, GripVertical } from "lucide-react";
 import type { AspectRatio, Scene } from "@/lib/types";
 import { StatusOverlay } from "./StatusOverlay";
+import { AssetThumb } from "@/components/AssetThumb";
 import { AspectFrame } from "@/components/AspectFrame";
 import { cn } from "@/lib/utils";
 
@@ -36,7 +37,7 @@ export function SceneThumb({
     <div
       ref={setNodeRef}
       style={style}
-      className={cn("group/thumb w-28 shrink-0", isDragging && "z-10")}
+      className={cn("group/thumb w-[4.5rem] shrink-0", isDragging && "z-10")}
     >
       <button
         onClick={onSelect}
@@ -48,16 +49,7 @@ export function SceneThumb({
         )}
       >
         <AspectFrame ratio={ratio} className="w-full">
-          {scene.asset ? (
-            // Thumbnails stay lightweight: show the poster (or the frame) as an
-            // image even for video assets.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={scene.asset.posterUrl ?? scene.asset.url}
-              alt={scene.title}
-              className="h-full w-full object-cover"
-            />
-          ) : null}
+          {scene.asset ? <AssetThumb asset={scene.asset} alt={scene.title} /> : null}
           <StatusOverlay status={scene.status} error={scene.error} compact />
           {scene.medium === "video" && scene.status === "ready" && (
             <div className="absolute right-1 top-1 rounded bg-black/50 p-0.5">
