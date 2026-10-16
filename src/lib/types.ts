@@ -22,6 +22,9 @@ export interface FormatPreset {
 
 /** Visual treatment applied to a scene's generation prompt. */
 export type VisualStyle =
+  | "food-closeup"
+  | "flat-lay"
+  | "cozy-ambient"
   | "cinematic"
   | "3d-render"
   | "anime"
@@ -84,12 +87,21 @@ export interface Storyboard {
   updatedAt: number;
 }
 
-/** A starter storyboard used on the dashboard's "new from template" flow. */
+/** Groups templates on the dashboard. */
+export type TemplateCategory = "menu" | "promo" | "story" | "events" | "social";
+
+/**
+ * A starter storyboard used on the dashboard's "new from template" flow. Text
+ * fields may contain venue tokens ({venue}, {signature}…) — see lib/venue.
+ */
 export interface Template {
   id: string;
   name: string;
   description: string;
   format: AspectRatio;
   accent: string;
+  category?: TemplateCategory;
+  /** Emoji shown on the template card. */
+  emoji?: string;
   scenes: Array<Pick<Scene, "title" | "prompt" | "script" | "style" | "medium" | "durationSec">>;
 }

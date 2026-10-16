@@ -2,16 +2,19 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Check, AlertCircle } from "lucide-react";
+import { ArrowLeft, Check, AlertCircle, Store, Wand2 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { Avatar } from "@/components/Avatar";
-import { Button, Card, Input, Label, Textarea } from "@/components/ui";
+import { Button, Card, Input, Label, PasswordInput, Textarea } from "@/components/ui";
 import { displayName, useBrandKit, useUser } from "@/lib/data/UserContext";
 import { BRAND_FONTS } from "@/lib/brand";
+import { VENUE_TYPES, type VenueProfile } from "@/lib/venue";
+import { EXAMPLE_VENUE } from "@/lib/examples";
 import {
   updateBrandKit,
   updatePassword,
   updateProfile,
+  updateVenue,
   type ProfileFormState,
 } from "@/app/(app)/profile/actions";
 
@@ -48,7 +51,16 @@ export function ProfileClient() {
     {},
   );
 
+  const [venueState, venueAction, savingVenue] = useActionState<ProfileFormState, FormData>(
+    updateVenue,
+    {},
+  );
+
   const brand = useBrandKit();
+  const [venue, setVenue] = useState<VenueProfile>(brand.venue ?? {});
+  const setVenueField = (key: keyof VenueProfile) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+  ) => setVenue((v) => ({ ...v, [key]: e.target.value }));
   const [avatarUrl, setAvatarUrl] = useState(ctx.profile?.avatar_url ?? "");
   const name = displayName(ctx);
 
@@ -78,6 +90,94 @@ export function ProfileClient() {
             <p className="text-sm text-muted">{ctx.user.email}</p>
           </div>
         </div>
+
+        {/* Venue */}
+        <Card id="venue" className="mb-5 scroll-mt-20 p-5">
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <h2 className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-strong">
+              <Store className="h-4 w-4" /> Your venue
+            </h2>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => setVenue(EXAMPLE_VENUE)}
+              title="Fill the form with an example café"
+            >
+              <Wand2 className="h-3.5 w-3.5" /> Use example: Match Ya
+            </Button>
+          </div>
+          <p className="mb-4 text-xs text-muted">
+            Luna fills your venue&apos;s details into every template, caption idea and AI draft.
+          </p>
+          <form action={venueAction} className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="venue_name">Venue name</Label>
+                <Input
+                  id="venue_name"
+                  name="venue_name"
+                  value={venue.name ?? ""}
+                  onChange={setVenueField("name")}
+                  placeholder="e.g. Little Fern Café"
+                />
+              </div>
+              <div>
+                <Label htmlFor="venue_type">Type</Label>
+                <select
+                  id="venue_type"
+                  name="venue_type"
+                  value={venue.type ?? "cafe"}
+                  onChange={setVenueField("type")}
+                  className="h-9 w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
+                >
+                  {VENUE_TYPES.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="venue_signature">Signature item</Label>
+                <Input
+                  id="venue_signature"
+                  name="venue_signature"
+                  value={venue.signature ?? ""}
+                  onChange={setVenueField("signature")}
+                  placeholder="e.g. pistachio croissant"
+                />
+              </div>
+              <div>
+                <Label htmlFor="venue_location">Neighbourhood / city</Label>
+                <Input
+                  id="venue_location"
+                  name="venue_location"
+                  value={venue.location ?? ""}
+                  onChange={setVenueField("location")}
+                  placeholder="e.g. Shoreditch"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="venue_vibe">Vibe</Label>
+              <Textarea
+                id="venue_vibe"
+                name="venue_vibe"
+                rows={2}
+                value={venue.vibe ?? ""}
+                onChange={setVenueField("vibe")}
+                placeholder="e.g. sunlit, plant-filled, slow mornings and good records"
+              />
+            </div>
+            <Feedback state={venueState} />
+            <div className="flex justify-end">
+              <Button type="submit" loading={savingVenue}>
+                Save venue
+              </Button>
+            </div>
+          </form>
+        </Card>
 
         {/* Profile form */}
         <Card className="mb-5 p-5">
@@ -112,7 +212,7 @@ export function ProfileClient() {
                 name="bio"
                 rows={3}
                 defaultValue={ctx.profile?.bio ?? ""}
-                placeholder="A line about you or your brand."
+                placeholder="A line about you or your café."
               />
             </div>
             <Feedback state={profileState} />
@@ -186,10 +286,9 @@ export function ProfileClient() {
           <form action={pwAction} className="space-y-4">
             <div>
               <Label htmlFor="password">New password</Label>
-              <Input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
                 placeholder="At least 6 characters"
                 autoComplete="new-password"
               />

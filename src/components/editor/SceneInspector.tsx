@@ -5,6 +5,9 @@ import { AudioLines, Check, Copy, Dices, Film, ImageIcon, Layers, Lock, Minus, P
 import type { Scene, SceneMedium, VisualStyle } from "@/lib/types";
 import { Button, Input, Label, Spinner, Textarea } from "@/components/ui";
 import { VISUAL_STYLES } from "@/lib/constants";
+import { CAPTION_PRESETS, SHOT_IDEAS } from "@/lib/presets";
+import { personalize } from "@/lib/venue";
+import { useBrandKit } from "@/lib/data/UserContext";
 import { useLunaStore } from "@/lib/store";
 import { cn, fitDurationToAudio, getAudioDuration, isVideoUrl } from "@/lib/utils";
 
@@ -31,6 +34,13 @@ export function SceneInspector({
   const selectTake = useLunaStore((s) => s.selectTake);
 
   const patch = (p: Partial<Scene>) => updateScene(storyboardId, scene.id, p);
+  const { venue } = useBrandKit();
+  const [captionsOpen, setCaptionsOpen] = useState(false);
+
+  function addShotIdea(text: string) {
+    const base = scene.prompt.trim().replace(/[.,]$/, "");
+    patch({ prompt: base ? `${base}, ${text}` : text });
+  }
   const takes = scene.takes ?? [];
 
   const [narrating, setNarrating] = useState(false);
@@ -117,8 +127,21 @@ export function SceneInspector({
             onChange={(e) => patch({ prompt: e.target.value })}
             placeholder="Describe the shot you want the model to generate…"
           />
-          <p className="mt-1 text-[11px] text-muted">
-            Luna adds style modifiers automatically based on the look below.
+          <div className="mt-2 flex flex-wrap gap-1">
+            {SHOT_IDEAS.map((idea) => (
+              <button
+                key={idea.label}
+                type="button"
+                onClick={() => addShotIdea(idea.text)}
+                title={`Add “${idea.text}”`}
+                className="rounded-full border border-border bg-surface-2 px-2 py-0.5 text-[11px] text-muted-strong transition-colors hover:border-accent hover:text-foreground"
+              >
+                + {idea.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1.5 text-[11px] text-muted">
+            Tap a shot idea to add it. Luna adds style modifiers automatically based on the look below.
           </p>
         </div>
 
@@ -131,6 +154,39 @@ export function SceneInspector({
             onChange={(e) => patch({ script: e.target.value })}
             placeholder="The line of voiceover or on-screen text for this beat."
           />
+          <button
+            type="button"
+            onClick={() => setCaptionsOpen((o) => !o)}
+            className="mt-1 text-[11px] font-medium text-accent-strong hover:underline"
+          >
+            {captionsOpen ? "Hide caption ideas" : "Caption ideas…"}
+          </button>
+          {captionsOpen && (
+            <div className="mt-1.5 space-y-2 rounded-lg border border-border bg-surface-2 p-2">
+              {CAPTION_PRESETS.map((group) => (
+                <div key={group.group}>
+                  <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted">
+                    {group.group}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {group.lines.map((line) => {
+                      const text = personalize(line, venue);
+                      return (
+                        <button
+                          key={line}
+                          type="button"
+                          onClick={() => patch({ script: text })}
+                          className="rounded-md bg-surface px-2 py-1 text-left text-[11px] text-muted-strong transition-colors hover:bg-accent-soft hover:text-foreground"
+                        >
+                          {text}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
           {/* Voiceover: synthesize the script to narration baked into the export. */}
           <div className="mt-2 flex items-center gap-2">
             <Button

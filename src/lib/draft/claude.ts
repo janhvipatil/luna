@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { DraftRequest, DraftScene, DraftStoryboard } from "./types";
+import { describeVenue } from "@/lib/venue";
 import type { SceneMedium, VisualStyle } from "@/lib/types";
 import { VISUAL_STYLES } from "@/lib/constants";
 
@@ -30,14 +31,20 @@ const STORYBOARD_SCHEMA: Anthropic.Tool.InputSchema = {
   required: ["title", "description", "scenes"],
 };
 
-const SYSTEM = `You are a creative director for short-form marketing video. Given a brief, produce a tight storyboard of 3–6 scenes that flows well (hook → build → payoff → call to action).
+const SYSTEM = `You are a creative director who makes short-form social video (Reels, TikTok, Shorts) for independent cafés, bakeries and restaurants. Given a brief, produce a tight storyboard of 3–6 scenes that makes people hungry and gives them a reason to visit or order (hook → build → payoff → call to action).
+
+What works for food & hospitality content:
+- Open on the most appetising, sensory shot — steam, pours, pulls, crunch, first bite. The hook must land in under 3 seconds.
+- Show craft and people (hands, baristas, chefs) as well as the food; show the space and its atmosphere at least once.
+- End with a concrete, local action: book a table, visit today, order for pickup, try the special before it's gone.
+- Use the venue's real name, signature item and details when provided. Never invent prices, addresses, opening hours or dates the brief doesn't give — keep those generic.
 
 For each scene write:
-- title: a 1–2 word beat name (e.g. "Hook", "Problem", "CTA").
-- prompt: a vivid visual prompt for an image/video model describing the shot (subject, setting, lighting, mood). Do not mention brand names you weren't given.
-- script: one short line of on-screen caption or voiceover for that beat.
-- style: the visual look, chosen from the allowed set.
-- medium: "image" or "video" — use video sparingly for motion-worthy beats.
+- title: a 1–2 word beat name (e.g. "Hook", "The pour", "CTA").
+- prompt: a vivid visual prompt for an image/video model describing the shot (subject, plating/props, setting, lighting, mood, camera angle).
+- script: one short line of on-screen caption or voiceover — warm, conversational, scroll-stopping.
+- style: the visual look, chosen from the allowed set. Prefer "food-closeup" for dish/drink hero shots, "flat-lay" for overhead table spreads, "cozy-ambient" for interiors and atmosphere.
+- medium: "image" or "video" — use video for motion-worthy beats (pours, pulls, steam, slicing).
 - durationSec: 2–6 seconds on screen.
 
 Keep the whole piece punchy — total runtime under ~25 seconds.`;
@@ -70,8 +77,10 @@ function coerceScene(raw: unknown): DraftScene | null {
 export async function draftWithClaude({
   brief,
   tone,
+  venue,
 }: DraftRequest): Promise<DraftStoryboard> {
   const client = new Anthropic();
+  const venueInfo = describeVenue(venue);
 
   // Force a tool call so Claude returns structured, schema-validated JSON
   // (works across SDK versions, unlike the newer output_config.format).
@@ -90,7 +99,13 @@ export async function draftWithClaude({
     messages: [
       {
         role: "user",
-        content: `Brief: ${brief}${tone ? `\nTone: ${tone}` : ""}`,
+        content: [
+          venueInfo && `Venue:\n${venueInfo}`,
+          `Brief: ${brief}`,
+          tone && `Tone: ${tone}`,
+        ]
+          .filter(Boolean)
+          .join("\n\n"),
       },
     ],
   });

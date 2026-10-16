@@ -11,6 +11,9 @@ import { FORMAT_PRESETS } from "../constants";
  */
 
 const STYLE_PALETTE: Record<VisualStyle, [string, string, string]> = {
+  "food-closeup": ["#3b1d0e", "#9a3412", "#fdba74"],
+  "flat-lay": ["#f5efe6", "#d6c3a5", "#7c4a1e"],
+  "cozy-ambient": ["#422006", "#a16207", "#fde68a"],
   cinematic: ["#1e1b4b", "#4c1d95", "#f59e0b"],
   photographic: ["#0f172a", "#334155", "#e2e8f0"],
   "product-shot": ["#f8fafc", "#cbd5e1", "#0f172a"],

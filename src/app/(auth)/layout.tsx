@@ -14,8 +14,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </Link>
       <div className="w-full max-w-sm">{children}</div>
       <p className="mt-8 max-w-sm text-center text-xs leading-relaxed text-muted">
-        Luna is the UI layer over the AI models you already use — storyboard,
-        script, and generate short-form content.
+        Luna turns your café or restaurant into scroll-stopping Reels and
+        TikToks — pick a template, tweak the shots, generate every scene.
       </p>
     </div>
   );

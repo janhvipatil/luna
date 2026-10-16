@@ -7,6 +7,12 @@ import type { VisualStyle } from "../types";
  * consistent results for a given Luna style.
  */
 const STYLE_MODIFIERS: Record<VisualStyle, string> = {
+  "food-closeup":
+    "professional food photography, macro close-up, appetizing, glistening textures, shallow depth of field, soft natural side light",
+  "flat-lay":
+    "overhead flat lay food photography, top-down, styled table spread, linen and ceramics, even soft daylight",
+  "cozy-ambient":
+    "warm cozy café interior, golden hour light through windows, candid, inviting atmosphere, lifestyle photography",
   cinematic: "cinematic still, dramatic lighting, shallow depth of field, film grain, 35mm",
   photographic: "professional photograph, natural lighting, high detail, editorial",
   "product-shot": "product photography, clean studio background, soft shadows, sharp focus",

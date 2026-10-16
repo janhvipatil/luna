@@ -1,56 +1,60 @@
 import type { DraftRequest, DraftStoryboard } from "./types";
+import { venueTokens } from "@/lib/venue";
 
 /**
- * Deterministic, no-LLM drafter. Produces a solid hook→problem→solution→proof→
- * CTA structure seeded from the brief, so AI drafting works even without an
+ * Deterministic, no-LLM drafter. Produces a solid food-content structure
+ * (sensory hook → craft → the bite → atmosphere → CTA) seeded from the brief
+ * and the venue profile, so AI drafting works even without an
  * ANTHROPIC_API_KEY. When a key is present the route uses Claude instead.
  */
-export function draftFromTemplate({ brief, tone }: DraftRequest): DraftStoryboard {
-  const subject = brief.trim() || "your product";
+export function draftFromTemplate({ brief, tone, venue }: DraftRequest): DraftStoryboard {
+  const subject = brief.trim() || "our signature dish";
   const short = subject.length > 60 ? `${subject.slice(0, 57)}…` : subject;
   const toneNote = tone ? `, ${tone} tone` : "";
+  const v = venueTokens(venue);
+  const venueName = venue?.name ?? v.venue;
 
   return {
     title: short.charAt(0).toUpperCase() + short.slice(1),
-    description: `Short-form concept for: ${subject}${toneNote}`,
+    description: `Short-form concept for ${venueName}: ${subject}${toneNote}`,
     scenes: [
       {
         title: "Hook",
-        prompt: `Eye-catching opening shot that represents ${subject}, dramatic lighting on a dark background`,
+        prompt: `Mouth-watering macro close-up for: ${subject}. Steam rising, glistening textures, dark moody background`,
         script: "Stop scrolling — you'll want to see this.",
-        style: "cinematic",
-        medium: "image",
+        style: "food-closeup",
+        medium: "video",
         durationSec: 3,
       },
       {
-        title: "Problem",
-        prompt: `A relatable everyday scene showing the frustration that ${subject} solves, muted colors`,
-        script: "Tired of doing it the hard way?",
-        style: "photographic",
-        medium: "image",
-        durationSec: 4,
-      },
-      {
-        title: "Solution",
-        prompt: `Clean hero shot of ${subject} on a studio pedestal, soft shadows, confident and modern`,
-        script: `Meet ${short}.`,
-        style: "product-shot",
+        title: "Craft",
+        prompt: `Hands preparing it with care behind the counter of a ${v.vibe} ${v.type}, warm light, close-up`,
+        script: "Made fresh, by hand, every day.",
+        style: "cinematic",
         medium: "video",
         durationSec: 4,
       },
       {
-        title: "Proof",
-        prompt: `Bright, optimistic before-and-after showing the benefit of ${subject}`,
-        script: "Real results you can see.",
-        style: "photographic",
+        title: "The bite",
+        prompt: `First bite or sip, slow motion, revealing the texture inside — ${subject}`,
+        script: "This is the moment.",
+        style: "food-closeup",
+        medium: "video",
+        durationSec: 3,
+      },
+      {
+        title: "Atmosphere",
+        prompt: `Inside a ${v.vibe} ${v.type}: people relaxing at sunny tables, plants, golden-hour light`,
+        script: `Pull up a chair at ${v.venue}.`,
+        style: "cozy-ambient",
         medium: "image",
-        durationSec: 4,
+        durationSec: 3,
       },
       {
         title: "Call to action",
-        prompt: `Bold closing frame with negative space for text, brand gradient background, featuring ${subject}`,
-        script: "Try it today — link in bio.",
-        style: "flat-illustration",
+        prompt: `Overhead flat lay with negative space for text, featuring ${subject}, linen and ceramics`,
+        script: `Come try it at ${v.venue}${venue?.location ? ` in ${venue.location}` : ""}.`,
+        style: "flat-lay",
         medium: "image",
         durationSec: 3,
       },

@@ -3,6 +3,7 @@ import type { AspectRatio } from "@/lib/types";
 import type { DraftRequest } from "@/lib/draft/types";
 import { draftFromTemplate } from "@/lib/draft/fallback";
 import { draftWithClaude, isClaudeConfigured } from "@/lib/draft/claude";
+import { parseVenue } from "@/lib/venue";
 
 export const maxDuration = 60;
 
@@ -30,7 +31,9 @@ export async function POST(request: Request) {
     : "9:16";
   const tone = typeof body.tone === "string" ? body.tone.trim() : undefined;
 
-  const req: DraftRequest = { brief: brief.slice(0, 1000), format, tone };
+  const venue = parseVenue(body.venue);
+
+  const req: DraftRequest = { brief: brief.slice(0, 1000), format, tone, venue };
 
   if (isClaudeConfigured()) {
     try {

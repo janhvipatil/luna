@@ -38,7 +38,7 @@ export function NewStoryboardModal({ open, onClose }: { open: boolean; onClose: 
           <Input
             id="sb-title"
             autoFocus
-            placeholder="e.g. Spring launch teaser"
+            placeholder="e.g. Pumpkin spice is back"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
@@ -50,7 +50,7 @@ export function NewStoryboardModal({ open, onClose }: { open: boolean; onClose: 
           <Textarea
             id="sb-desc"
             rows={2}
-            placeholder="What's this piece of content for?"
+            placeholder="What are you promoting? A dish, a deal, an event…"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />

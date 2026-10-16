@@ -8,18 +8,11 @@ import type {
   VisualStyle,
 } from "@/lib/types";
 import { createId } from "@/lib/utils";
+import { VISUAL_STYLES } from "@/lib/constants";
 
 const ASPECTS: AspectRatio[] = ["9:16", "1:1", "16:9", "4:5"];
 const MEDIA: SceneMedium[] = ["image", "video"];
-const STYLES: VisualStyle[] = [
-  "cinematic",
-  "3d-render",
-  "anime",
-  "photographic",
-  "flat-illustration",
-  "retro",
-  "product-shot",
-];
+const STYLES: VisualStyle[] = VISUAL_STYLES.map((s) => s.id);
 
 function asString(v: unknown, fallback = ""): string {
   return typeof v === "string" ? v : fallback;

@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Luna — Storyboard & generate short-form content",
+  title: "Luna — Short-form video for cafés & restaurants",
   description:
-    "Luna turns a storyboard into short-form marketing video. Design the flow, write the script, and generate every scene with the AI backend of your choice.",
+    "Luna helps cafés, bakeries and restaurants make Reels and TikToks that fill tables. Start from food-first templates, tweak the shots and captions, and generate every scene with AI.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

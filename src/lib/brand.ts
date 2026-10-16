@@ -1,4 +1,5 @@
 import type { Json } from "@/lib/supabase/types";
+import { parseVenue, type VenueProfile } from "@/lib/venue";
 
 /** Per-user brand styling applied to captions and overlays. */
 export interface BrandKit {
@@ -8,6 +9,8 @@ export interface BrandKit {
   font?: "sans" | "serif" | "mono";
   /** URL of a logo watermark shown on each scene. */
   logoUrl?: string;
+  /** The café / restaurant this account markets (see lib/venue). */
+  venue?: VenueProfile;
 }
 
 export const BRAND_FONTS: Array<{ id: NonNullable<BrandKit["font"]>; label: string }> = [
@@ -36,6 +39,8 @@ export function parseBrandKit(raw: Json | null | undefined): BrandKit {
   if (typeof o.color === "string" && /^#[0-9a-fA-F]{3,8}$/.test(o.color)) kit.color = o.color;
   if (o.font === "sans" || o.font === "serif" || o.font === "mono") kit.font = o.font;
   if (typeof o.logoUrl === "string" && o.logoUrl.trim()) kit.logoUrl = o.logoUrl.trim();
+  const venue = parseVenue(o.venue);
+  if (venue) kit.venue = venue;
   return kit;
 }
 
