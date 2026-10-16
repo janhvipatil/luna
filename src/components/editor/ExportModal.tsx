@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, Film, AlertTriangle } from "lucide-react";
+import { Download, Film, Server, AlertTriangle } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui";
 import type { Storyboard } from "@/lib/types";
@@ -33,6 +33,8 @@ export function ExportModal({
   const [error, setError] = useState<string>();
   const [result, setResult] = useState<RenderResult | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [remoteUrl, setRemoteUrl] = useState<string | null>(null);
+  const [mode, setMode] = useState<"browser" | "server" | null>(null);
   const brand = useBrandKit();
 
   const preset = FORMAT_PRESETS[storyboard.format];
@@ -47,6 +49,7 @@ export function ExportModal({
 
   async function handleRender() {
     setPhase("rendering");
+    setMode("browser");
     setProgress(0);
     setError(undefined);
     try {
@@ -64,9 +67,37 @@ export function ExportModal({
     }
   }
 
-  function handleDownload() {
-    if (!result) return;
-    downloadBlob(result.blob, `${slugify(storyboard.title)}.${result.extension}`);
+  async function handleServerRender() {
+    setPhase("rendering");
+    setMode("server");
+    setProgress(0);
+    setError(undefined);
+    try {
+      const res = await fetch("/api/render", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storyboardId: storyboard.id }),
+      });
+      const data: { url?: string; error?: string } = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error || "Server render failed.");
+      setRemoteUrl(data.url);
+      setPreviewUrl(data.url);
+      setPhase("done");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Server render failed.");
+      setPhase("error");
+    }
+  }
+
+  async function handleDownload() {
+    const name = `${slugify(storyboard.title)}.${result?.extension ?? "mp4"}`;
+    if (result?.blob) {
+      downloadBlob(result.blob, name);
+    } else if (remoteUrl) {
+      // Server render lives at a remote URL — fetch it to force a download.
+      const blob = await fetch(remoteUrl).then((r) => r.blob());
+      downloadBlob(blob, name);
+    }
   }
 
   return (
@@ -106,7 +137,7 @@ export function ExportModal({
           </div>
         )}
 
-        {phase === "rendering" && (
+        {phase === "rendering" && mode === "browser" && (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs text-muted">
               <span>Rendering in real time…</span>
@@ -124,7 +155,14 @@ export function ExportModal({
           </div>
         )}
 
-        {phase === "done" && result && previewUrl && (
+        {phase === "rendering" && mode === "server" && (
+          <div className="flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-3 text-xs text-muted">
+            <div className="h-3 w-3 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+            Rendering on the server — stitching clips and mixing audio. You can keep working.
+          </div>
+        )}
+
+        {phase === "done" && previewUrl && (
           <div className="space-y-3">
             <video
               src={previewUrl}
@@ -134,7 +172,7 @@ export function ExportModal({
               className="mx-auto max-h-[40vh] rounded-lg border border-border"
             />
             <p className="text-center text-[11px] text-muted">
-              Format: {result.extension.toUpperCase()}
+              {mode === "server" ? "Server-rendered MP4 (video clips + audio)" : "Recorded in your browser"}
             </p>
           </div>
         )}
@@ -143,7 +181,7 @@ export function ExportModal({
           <div className="rounded-lg bg-danger/10 px-3 py-2 text-xs text-danger">{error}</div>
         )}
 
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
             Close
           </Button>
@@ -152,9 +190,24 @@ export function ExportModal({
               <Download className="h-4 w-4" /> Download
             </Button>
           ) : (
-            <Button onClick={handleRender} loading={phase === "rendering"}>
-              <Film className="h-4 w-4" /> Render video
-            </Button>
+            <>
+              <Button
+                variant="secondary"
+                onClick={handleRender}
+                loading={phase === "rendering" && mode === "browser"}
+                disabled={phase === "rendering"}
+              >
+                <Film className="h-4 w-4" /> Quick export
+              </Button>
+              <Button
+                onClick={handleServerRender}
+                loading={phase === "rendering" && mode === "server"}
+                disabled={phase === "rendering"}
+                title="Stitches real video clips and mixes audio into an MP4"
+              >
+                <Server className="h-4 w-4" /> Render MP4
+              </Button>
+            </>
           )}
         </div>
       </div>

@@ -21,6 +21,9 @@ export function AppHeader({
     <header
       className={cn(
         "sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/70 bg-background/70 px-4 backdrop-blur-md sm:px-6",
+        // Breathing room above the bar content, plus the device safe-area inset
+        // (notch) so it never sits flush against the top edge.
+        "box-content pt-[max(0.5rem,env(safe-area-inset-top))] pb-2",
         className,
       )}
     >
