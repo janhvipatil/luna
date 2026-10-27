@@ -4,7 +4,7 @@
  *
  * AI runs on each user's own Gemini key (bring-your-own-key), so Luna's plans
  * price the software only; Google bills generation directly. For reference,
- * Veo 3.1 Fast is ~$0.10 per generated second at 720p, and a typical reel
+ * Gemini Omni Flash (like Veo 3.1 Fast) is ~$0.10 per generated second at 720p, and a typical reel
  * (mostly stills + two 4-second video shots) costs about $0.80 on Google.
  */
 
@@ -87,11 +87,11 @@ export const PLANS: Plan[] = [
 export const PRICING_FAQ: Array<{ q: string; a: string }> = [
   {
     q: "What do the AI features cost?",
-    a: "Luna runs on your own Google Gemini API key, so Google bills you directly at its own rates. AI drafts and voiceovers work on Gemini's free tier; Veo video (from $0.05 per second) and AI images (about $0.03 each) need billing on your Google project. A typical reel with two short video shots costs about $0.80.",
+    a: "Luna runs on your own Google Gemini API key, so Google bills you directly at its own rates. AI drafts and voiceovers work on Gemini's free tier; AI video (about $0.10 per second) and AI images (about $0.03 each) need billing on your Google project. A typical reel with two short video shots costs about $0.80.",
   },
   {
     q: "Which AI model makes the videos?",
-    a: "Google Veo 3.1 — the same model behind Google Flow. It generates vertical clips with natural sound, and can animate photos of your real dishes.",
+    a: "Google's Gemini Omni Flash by default, or Veo 3.1 (the model behind Google Flow) if you prefer. Both generate vertical clips with natural sound and can animate photos of your real dishes.",
   },
   {
     q: "Do I own what I make?",

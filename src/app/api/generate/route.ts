@@ -136,7 +136,12 @@ export async function POST(request: Request) {
     let posterUrl = result.posterUrl;
     if (user) {
       try {
-        url = await storeAsset(supabase, user.id, { url: result.url, storyboardId, sceneId });
+        url = await storeAsset(supabase, user.id, {
+          url: result.url,
+          storyboardId,
+          sceneId,
+          headers: provider.downloadHeaders?.(ctx),
+        });
         if (posterUrl && posterUrl !== result.url) {
           posterUrl = await storeAsset(supabase, user.id, {
             url: posterUrl,

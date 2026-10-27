@@ -28,7 +28,7 @@ export default function PrivacyPage() {
         <ul>
           <li><strong>Supabase</strong> — database, authentication and file storage.</li>
           <li><strong>Vercel</strong> — hosting.</li>
-          <li><strong>Google (Gemini API, on your own key)</strong> — storyboard drafting, voiceover, AI images and Veo video from your briefs, captions, prompts and photos. Your key is encrypted at rest and used only for your requests.</li>
+          <li><strong>Google (Gemini API, on your own key)</strong> — storyboard drafting, voiceover, AI images and video (Gemini Omni Flash or Veo) from your briefs, captions, prompts and photos. Your key is encrypted at rest and used only for your requests.</li>
         </ul>
         <p className="mt-2">Each only receives what it needs for that feature.</p>
       </section>

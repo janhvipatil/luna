@@ -3,6 +3,7 @@ import { mockProvider } from "./mock";
 import { replicateProvider } from "./replicate";
 import { comfyProvider } from "./comfyui";
 import { veoProvider } from "./veo";
+import { geminiOmniProvider } from "./gemini-omni";
 import { geminiImageProvider } from "./gemini-image";
 
 /**
@@ -13,6 +14,7 @@ import { geminiImageProvider } from "./gemini-image";
  * net so generation never hard-fails for a user with no backend connected.
  */
 const REGISTRY: Provider[] = [
+  geminiOmniProvider,
   veoProvider,
   geminiImageProvider,
   replicateProvider,
@@ -20,7 +22,7 @@ const REGISTRY: Provider[] = [
   mockProvider,
 ];
 
-/** "auto" picks the best configured backend per scene (video → Veo, etc.). */
+/** "auto" picks the best configured backend per scene (video → Omni Flash or Veo, etc.). */
 export const AUTO_PROVIDER_ID = "auto";
 export const DEFAULT_PROVIDER_ID = AUTO_PROVIDER_ID;
 

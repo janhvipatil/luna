@@ -294,13 +294,13 @@ export function SceneInspector({
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={startFrame} alt="Start frame" className="h-10 w-10 rounded object-cover" />
                   <p className="text-[11px] leading-snug text-muted">
-                    Veo animates this still. Use a photo of your café to animate your real dish instead.
+                    AI video animates this still. Use a photo of your café to animate your real dish instead.
                   </p>
                 </>
               ) : (
                 <p className="text-[11px] leading-snug text-muted">
                   Generated from the prompt. Tip: upload a photo of the real dish (or generate an
-                  image first) and Veo will animate it.
+                  image first) and the video model will animate it.
                 </p>
               )}
             </div>

@@ -25,10 +25,10 @@ export interface AiStatus {
   videoTier: VideoTier;
 }
 
-export const EMPTY_AI_CONTEXT: AiContext = { geminiImages: false, videoTier: "fast" };
+export const EMPTY_AI_CONTEXT: AiContext = { geminiImages: false, videoTier: "omni" };
 
 function asTier(value: string | null | undefined): VideoTier {
-  return value === "lite" || value === "standard" ? value : "fast";
+  return value === "lite" || value === "fast" || value === "standard" ? value : "omni";
 }
 
 export async function getAiContext(

@@ -211,8 +211,8 @@ export async function updateAiPreferences(
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out." };
 
-  const tier = String(formData.get("video_model") ?? "fast");
-  const video_model = ["lite", "fast", "standard"].includes(tier) ? tier : "fast";
+  const tier = String(formData.get("video_model") ?? "omni");
+  const video_model = ["omni", "lite", "fast", "standard"].includes(tier) ? tier : "omni";
   const gemini_images = formData.get("gemini_images") === "on";
 
   const { error } = await supabase

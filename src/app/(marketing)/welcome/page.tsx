@@ -9,7 +9,7 @@ import { photoUrl } from "@/lib/photos";
 export const metadata: Metadata = {
   title: "Luna — Short-form video for cafés & restaurants",
   description:
-    "Turn an idea into short-form video, one scene at a time. Food-first templates, AI-drafted storyboards and Veo-generated clips for cafés and restaurants.",
+    "Turn an idea into short-form video, one scene at a time. Food-first templates, AI-drafted storyboards and AI-generated clips for cafés and restaurants.",
 };
 
 const MOSAIC = ["latte-art", "noodle-pull", "weekend-brunch", "dessert-pull", "bake-of-the-day", "happy-hour"];
@@ -28,13 +28,13 @@ const STEPS = [
   {
     icon: Film,
     title: "Generate & post",
-    body: "Generate every scene as video with Google Veo — or animate photos of your real dishes — then export a vertical reel ready for Instagram and TikTok.",
+    body: "Generate every scene as video with Google's Gemini Omni Flash — or animate photos of your real dishes — then export a vertical reel ready for Instagram and TikTok.",
   },
 ];
 
 const FEATURES = [
   { icon: Wand2, title: "AI storyboards", body: "Describe what you're promoting; get scenes, shots and captions written for hospitality." },
-  { icon: Film, title: "Veo video", body: "The model behind Google Flow, generating vertical clips with natural sound." },
+  { icon: Film, title: "AI video", body: "Google's newest video model, Gemini Omni Flash, generating vertical clips with natural sound." },
   { icon: Sparkles, title: "Animate real dishes", body: "Upload a photo of your latte or croissant and bring it to life — no fake food." },
   { icon: AudioLines, title: "Voiceover & music", body: "Add narration and a background track, mixed straight into the export." },
 ];

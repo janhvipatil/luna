@@ -13,9 +13,10 @@ import {
 } from "@/app/(app)/profile/actions";
 
 const TIERS = [
-  { id: "lite", name: "Lite", price: "$0.05/s", note: "Cheapest, good for drafts" },
-  { id: "fast", name: "Fast", price: "$0.10/s", note: "Recommended" },
-  { id: "standard", name: "Standard", price: "$0.40/s", note: "Highest quality" },
+  { id: "omni", name: "Omni Flash", price: "$0.10/s", note: "Recommended · Google's newest" },
+  { id: "lite", name: "Veo Lite", price: "$0.05/s", note: "Cheapest, good for drafts" },
+  { id: "fast", name: "Veo Fast", price: "$0.10/s", note: "Veo 3.1" },
+  { id: "standard", name: "Veo Standard", price: "$0.40/s", note: "Highest quality" },
 ] as const;
 
 function Feedback({ state }: { state: ProfileFormState }) {
@@ -38,7 +39,7 @@ function Feedback({ state }: { state: ProfileFormState }) {
 
 /**
  * Bring-your-own-key: the user connects their own Gemini API key, which powers
- * AI drafting, voiceover, AI images and Veo video on their own Google bill.
+ * AI drafting, voiceover, AI images and video on their own Google bill.
  * The key is verified and encrypted server-side; only its last 4 characters
  * ever come back to the browser.
  */
@@ -81,7 +82,7 @@ export function GeminiSettings() {
         </div>
         <div className="rounded-lg border border-border bg-surface-2 p-3">
           <div className="font-medium text-foreground">Needs billing on your Google project</div>
-          <div className="mt-0.5 text-muted">Veo video · AI images</div>
+          <div className="mt-0.5 text-muted">AI video · AI images</div>
         </div>
       </div>
 
@@ -116,8 +117,8 @@ export function GeminiSettings() {
         <>
           <form action={prefAction} className="mt-5 space-y-4 border-t border-border pt-5">
             <div>
-              <Label>Video quality (Veo 3.1)</Label>
-              <div className="grid gap-2 sm:grid-cols-3">
+              <Label>Video model</Label>
+              <div className="grid gap-2 sm:grid-cols-2">
                 {TIERS.map((t) => (
                   <label
                     key={t.id}
@@ -140,8 +141,8 @@ export function GeminiSettings() {
                 ))}
               </div>
               <p className="mt-1 text-[11px] text-muted">
-                Per generated second at 720p, billed by Google. A typical 4-second clip on Fast
-                costs about $0.40.
+                Per generated second at 720p, billed by Google. A typical 4-second clip on
+                Omni Flash costs about $0.40.
               </p>
             </div>
             <label className="flex cursor-pointer items-start gap-2 text-xs">

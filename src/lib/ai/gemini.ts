@@ -2,8 +2,8 @@
  * Minimal Gemini API client (REST, no SDK) for the user's own API key.
  *
  * Text, speech and images go through the Interactions API
- * (`POST /v1beta/interactions`); video (Veo) uses `predictLongRunning` in
- * providers/veo.ts. Requests set `store: false` so Google doesn't keep the
+ * (`POST /v1beta/interactions`), including video with Gemini Omni Flash
+ * (providers/gemini-omni.ts); Veo uses `predictLongRunning` in providers/veo.ts. Requests set `store: false` so Google doesn't keep the
  * interaction server-side — Luna stores what it needs itself.
  *
  * @see https://ai.google.dev/gemini-api/docs/interactions
@@ -20,15 +20,22 @@ export const GEMINI_MODELS = {
   image: process.env.GEMINI_IMAGE_MODEL ?? "gemini-nano-banana-2.1",
 } as const;
 
+/** Default video model — text/photo-to-video with native audio, 3–10 s clips. */
+export const OMNI_VIDEO_MODEL = process.env.GEMINI_VIDEO_MODEL ?? "gemini-omni-1.1-flash";
+
 export const VEO_MODELS = {
   lite: "veo-3.1-lite-generate-preview",
   fast: "veo-3.1-fast-generate-preview",
   standard: "veo-3.1-generate-preview",
 } as const;
-export type VideoTier = keyof typeof VEO_MODELS;
+export type VeoTier = keyof typeof VEO_MODELS;
+/** The user's video model: Omni Flash (default) or one of the Veo 3.1 tiers. */
+export type VideoTier = "omni" | VeoTier;
 
 /** USD per generated second at 720p, from the Gemini pricing page. */
-export const VEO_PRICE_PER_SECOND: Record<VideoTier, number> = { lite: 0.05, fast: 0.1, standard: 0.4 };
+export const VEO_PRICE_PER_SECOND: Record<VeoTier, number> = { lite: 0.05, fast: 0.1, standard: 0.4 };
+/** Omni Flash at 720p: ~5,792 output tokens per second at $17.50 / 1M. */
+export const OMNI_PRICE_PER_SECOND = 0.1;
 
 export class GeminiError extends Error {
   constructor(

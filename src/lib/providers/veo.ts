@@ -40,12 +40,12 @@ export function veoAspect(aspect: GenerationRequest["aspect"]): "16:9" | "9:16" 
   return aspect === "16:9" ? "16:9" : "9:16";
 }
 
-async function imagePart(url: string): Promise<{ mimeType: string; data: string }> {
+export async function imagePart(url: string): Promise<{ mimeType: string; data: string }> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Could not load the start image (${res.status}).`);
   const mimeType = (res.headers.get("content-type") ?? "").split(";")[0];
   if (mimeType !== "image/jpeg" && mimeType !== "image/png") {
-    throw new Error("Veo can only animate JPEG or PNG images — use a photo for the start frame.");
+    throw new Error("Video models can only animate JPEG or PNG images — use a photo for the start frame.");
   }
   return { mimeType, data: Buffer.from(await res.arrayBuffer()).toString("base64") };
 }
@@ -70,7 +70,8 @@ export const veoProvider: Provider = {
   homepage: "https://ai.google.dev/gemini-api/docs/veo",
   capabilities: { image: false, video: true },
   configHint: "Connect your Gemini API key in Profile → Gemini (video needs billing enabled).",
-  isConfigured: (ctx) => Boolean(ctx.geminiKey),
+  // Omni Flash is the default; Veo runs when the user picked a Veo tier.
+  isConfigured: (ctx) => Boolean(ctx.geminiKey) && ctx.videoTier !== "omni",
 
   async generate(): Promise<GenerationResult> {
     // Veo is long-running; the route always uses start/poll for it.
@@ -92,7 +93,7 @@ export const veoProvider: Provider = {
       parameters.personGeneration = "allow_adult";
     }
 
-    const model = VEO_MODELS[ctx.videoTier];
+    const model = VEO_MODELS[ctx.videoTier === "omni" ? "fast" : ctx.videoTier];
     const op = await geminiFetch<VeoOperation>(apiKey(ctx), `models/${model}:predictLongRunning`, {
       body: { instances: [instance], parameters },
     });

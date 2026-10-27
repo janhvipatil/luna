@@ -129,7 +129,7 @@ export function Dashboard() {
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">Connect your Gemini key</p>
               <p className="text-xs text-muted">
-                Unlocks AI drafts and voiceovers (free tier) and Veo video. You pay Google directly
+                Unlocks AI drafts and voiceovers (free tier) and AI video. You pay Google directly
                 for what you generate.
               </p>
             </div>

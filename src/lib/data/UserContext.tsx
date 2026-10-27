@@ -45,7 +45,7 @@ export function useBrandKit(): BrandKit {
 /** The signed-in user's AI connection status (no key → not connected). */
 export function useAiStatus(): AiStatus {
   const ctx = useContext(UserContext);
-  return ctx?.ai ?? { geminiConnected: false, geminiKeyHint: null, geminiImages: false, videoTier: "fast" };
+  return ctx?.ai ?? { geminiConnected: false, geminiKeyHint: null, geminiImages: false, videoTier: "omni" };
 }
 
 /** Best display name: profile name → email local-part. */
