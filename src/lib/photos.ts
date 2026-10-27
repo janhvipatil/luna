@@ -32,8 +32,8 @@ export const PHOTOS: Photo[] = [
   { id: "1600271886742-f049cd451bba", tags: ["juice", "orange juice", "fresh juice", "breakfast drink"] },
 
   // Bakery & desserts
-  { id: "1555507036-ab1f4038808a", tags: ["croissant", "pastry", "pastries", "oven", "flour", "bake", "flaky"] },
-  { id: "1509440159596-0249088772ff", tags: ["bread", "sourdough", "loaf", "bakery", "baker", "bake"] },
+  { id: "1555507036-ab1f4038808a", tags: ["croissant", "buns", "bun", "cardamom bun", "cinnamon bun", "pastry", "pastries", "oven", "flour", "bake", "baked", "bakery", "flaky"] },
+  { id: "1509440159596-0249088772ff", tags: ["bread", "sourdough", "loaf", "loaves", "bakery", "baker", "bake", "bake on site", "baked on site"] },
   { id: "1517686469429-8bdb88b9f907", tags: ["dough", "kneading", "baker", "hands", "flour", "5am", "bakery"] },
   { id: "1495147466023-ac5c588e2e94", tags: ["tart", "tarts", "pastry counter", "bake case", "pastries", "counter"] },
   { id: "1533134242443-d4fd215305ad", tags: ["cheesecake", "basque", "slice", "dessert", "cake"] },
@@ -67,7 +67,7 @@ export const PHOTOS: Photo[] = [
   { id: "1579584425555-c3ce17fd4351", tags: ["sushi", "japanese", "onigiri", "salmon", "soy"] },
   { id: "1611143669185-af224c5e3252", tags: ["sushi platter", "sushi", "japanese", "bento", "onigiri", "lunch set"] },
   { id: "1615361200141-f45040f367be", tags: ["nigiri", "sushi", "chopsticks", "salmon", "japanese"] },
-  { id: "1563245372-f21724e3856d", tags: ["dumplings", "dim sum", "bao", "steam", "steamer"] },
+  { id: "1563245372-f21724e3856d", tags: ["dumplings", "dim sum", "bao", "steamer basket", "gyoza"] },
   { id: "1546069901-ba9599a7e63c", tags: ["poke", "bowl", "lunch bowl", "lunch deal", "healthy", "takeaway"] },
   { id: "1512621776951-a57141f2eefd", tags: ["salad", "buddha bowl", "vegan", "healthy", "fresh", "vegetables"] },
   { id: "1540189549336-e6e99c3679fe", tags: ["salad", "seasonal", "greens", "fresh"] },
