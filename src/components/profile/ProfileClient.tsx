@@ -7,11 +7,10 @@ import { AppHeader } from "@/components/AppHeader";
 import { Avatar } from "@/components/Avatar";
 import { Button, Card, Input, Label, PasswordInput, Textarea } from "@/components/ui";
 import { displayName, useBrandKit, useUser } from "@/lib/data/UserContext";
-import { BRAND_FONTS } from "@/lib/brand";
 import { VENUE_TYPES, type VenueProfile } from "@/lib/venue";
 import { GeminiSettings } from "./GeminiSettings";
+import { BrandKitForm } from "./BrandKitForm";
 import {
-  updateBrandKit,
   updatePassword,
   updateProfile,
   updateVenue,
@@ -46,11 +45,6 @@ export function ProfileClient() {
     updatePassword,
     {},
   );
-  const [brandState, brandAction, savingBrand] = useActionState<ProfileFormState, FormData>(
-    updateBrandKit,
-    {},
-  );
-
   const [venueState, venueAction, savingVenue] = useActionState<ProfileFormState, FormData>(
     updateVenue,
     {},
@@ -218,61 +212,7 @@ export function ProfileClient() {
           </form>
         </Card>
 
-        {/* Brand kit */}
-        <Card className="mb-5 p-5">
-          <h2 className="mb-1 text-sm font-medium text-muted-strong">Brand look</h2>
-          <p className="mb-4 text-xs text-muted">
-            How every video looks: caption colour, font and a logo watermark. Photos of your café
-            are added per scene in the editor with &ldquo;Use a photo of your café&rdquo;.
-          </p>
-          <form action={brandAction} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="color">Accent color</Label>
-                <div className="flex items-center gap-2">
-                  <input
-                    id="color"
-                    name="color"
-                    type="color"
-                    defaultValue={brand.color ?? "#d9577a"}
-                    className="h-9 w-12 cursor-pointer rounded-lg border border-border bg-surface-2"
-                  />
-                  <span className="text-xs text-muted">Captions &amp; highlights</span>
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="font">Caption font</Label>
-                <select
-                  id="font"
-                  name="font"
-                  defaultValue={brand.font ?? "sans"}
-                  className="h-9 w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
-                >
-                  {BRAND_FONTS.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="logoUrl">Logo URL (optional)</Label>
-              <Input
-                id="logoUrl"
-                name="logoUrl"
-                defaultValue={brand.logoUrl ?? ""}
-                placeholder="https://…/logo.png — shown as a watermark"
-              />
-            </div>
-            <Feedback state={brandState} />
-            <div className="flex justify-end">
-              <Button type="submit" loading={savingBrand}>
-                Save brand look
-              </Button>
-            </div>
-          </form>
-        </Card>
+        <BrandKitForm />
 
         {/* Password */}
         <Card className="p-5">

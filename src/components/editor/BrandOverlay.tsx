@@ -1,7 +1,7 @@
 "use client";
 
 import { useBrandKit } from "@/lib/data/UserContext";
-import { fontFamily } from "@/lib/brand";
+import { brandName, fontFamily, watermarkColor } from "@/lib/brand";
 
 /** Scene caption styled with the user's brand color and font. */
 export function BrandCaption({ text }: { text: string }) {
@@ -19,16 +19,27 @@ export function BrandCaption({ text }: { text: string }) {
   );
 }
 
-/** Brand logo watermark, top-left, if the user set one. */
+/** Brand watermark, top-left: the logo if set, else the brand name. */
 export function LogoWatermark() {
   const brand = useBrandKit();
-  if (!brand.logoUrl) return null;
+  const name = brandName(brand);
+  if (brand.logoUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={brand.logoUrl}
+        alt={name ?? ""}
+        className="pointer-events-none absolute left-3 top-3 h-6 w-auto max-w-[40%] object-contain drop-shadow"
+      />
+    );
+  }
+  if (!name) return null;
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={brand.logoUrl}
-      alt=""
-      className="pointer-events-none absolute left-3 top-3 h-6 w-auto max-w-[40%] object-contain drop-shadow"
-    />
+    <span
+      className="pointer-events-none absolute left-3 top-3 max-w-[60%] truncate rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white shadow"
+      style={{ background: watermarkColor(brand), fontFamily: fontFamily(brand.font) }}
+    >
+      {name}
+    </span>
   );
 }

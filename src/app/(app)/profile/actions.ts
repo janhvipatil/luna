@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { parseVenue } from "@/lib/venue";
+import { isHexColor, MAX_BRAND_COLORS } from "@/lib/brand";
 import type { Json } from "@/lib/supabase/types";
 import { encryptSecret, secretHint } from "@/lib/ai/secrets";
 import { verifyGeminiKey } from "@/lib/ai/gemini";
@@ -53,16 +54,25 @@ export async function updateBrandKit(
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out." };
 
+  const name = String(formData.get("name") ?? "").trim().slice(0, 60);
   const color = String(formData.get("color") ?? "").trim();
+  const colors = formData
+    .getAll("colors")
+    .map((c) => String(c).trim())
+    .filter(isHexColor)
+    .slice(0, MAX_BRAND_COLORS);
   const fontRaw = String(formData.get("font") ?? "").trim();
   const logoUrl = String(formData.get("logoUrl") ?? "").trim();
   const font = ["sans", "serif", "mono"].includes(fontRaw) ? fontRaw : undefined;
+  if (logoUrl && !/^https:\/\//.test(logoUrl)) return { error: "The logo must be an https:// link or an upload." };
 
   // brand_kit also holds the venue profile — keep it when saving styling.
   const existing = await currentBrandKit(supabase, user.id);
   const brand_kit: Record<string, Json> = {
     ...(existing.venue ? { venue: existing.venue as Json } : {}),
-    ...(color ? { color } : {}),
+    ...(name ? { name } : {}),
+    ...(color && isHexColor(color) ? { color } : {}),
+    ...(colors.length ? { colors } : {}),
     ...(font ? { font } : {}),
     ...(logoUrl ? { logoUrl } : {}),
   };

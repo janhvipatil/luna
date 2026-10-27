@@ -1,6 +1,6 @@
 import type { Scene, Storyboard } from "@/lib/types";
 import { FORMAT_PRESETS } from "@/lib/constants";
-import type { BrandKit } from "@/lib/brand";
+import { brandName, watermarkColor, type BrandKit } from "@/lib/brand";
 import { isVideoUrl } from "@/lib/utils";
 
 function canvasFont(font: BrandKit["font"]): string {
@@ -121,6 +121,53 @@ function wrapText(
   return lines;
 }
 
+/** Seconds of the branded end card appended to exports. */
+const END_CARD_SEC = 2.5;
+
+/** Closing card: logo (or name) on the brand's accent color, plus the location. */
+function drawEndCard(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  brand: BrandKit,
+  logo: HTMLImageElement | null,
+) {
+  ctx.fillStyle = brand.colors?.[0] ?? "#1f2a24";
+  ctx.fillRect(0, 0, w, h);
+  const ink = brand.color ?? "#ffffff";
+  const name = brandName(brand);
+  let y = h * 0.42;
+  if (logo) {
+    const lw = Math.round(w * 0.46);
+    const lh = (logo.height / logo.width) * lw;
+    ctx.drawImage(logo, (w - lw) / 2, y - lh / 2, lw, lh);
+    y += lh / 2 + w * 0.08;
+  } else if (name) {
+    ctx.font = `700 ${Math.round(w * 0.085)}px ${canvasFont(brand.font)}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = ink;
+    ctx.fillText(name, w / 2, y, w * 0.86);
+    y += w * 0.1;
+  }
+  const line = brand.venue?.location ?? (logo ? name : undefined);
+  if (line) {
+    ctx.font = `600 ${Math.round(w * 0.038)}px ${canvasFont(brand.font)}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = ink;
+    ctx.globalAlpha = 0.85;
+    ctx.fillText(line.toUpperCase(), w / 2, y, w * 0.86);
+    ctx.globalAlpha = 1;
+  }
+  // A thin rule in each extra brand color.
+  const colors = brand.colors?.slice(1) ?? [];
+  colors.forEach((c, i) => {
+    ctx.fillStyle = c;
+    ctx.fillRect(0, h - (colors.length - i) * Math.round(h * 0.012), w, Math.round(h * 0.012));
+  });
+}
+
 function drawScene(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -152,6 +199,21 @@ function drawScene(
     ctx.globalAlpha = 0.9;
     ctx.drawImage(logo, Math.round(w * 0.05), Math.round(w * 0.05), lw, lh);
     ctx.globalAlpha = 1;
+  } else if (brandName(brand)) {
+    // No logo: the brand name on a pill in the brand's accent color.
+    const name = brandName(brand)!.toUpperCase();
+    const fs = Math.round(w * 0.03);
+    ctx.font = `700 ${fs}px ${canvasFont(brand.font)}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    const px = Math.round(fs * 0.8), ph = Math.round(fs * 2), x = Math.round(w * 0.05), y = Math.round(w * 0.05);
+    const tw = Math.min(ctx.measureText(name).width, w * 0.6);
+    ctx.fillStyle = watermarkColor(brand);
+    ctx.beginPath();
+    ctx.roundRect(x, y, tw + px * 2, ph, ph / 2);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(name, x + px, y + ph / 2, w * 0.6);
   }
 
   // Caption (script) at the bottom with a legibility scrim.
@@ -320,7 +382,10 @@ export async function renderStoryboardVideo(
   const images = await Promise.all(scenes.map((s) => (s.asset ? loadMedia(s.asset.url) : null)));
   const logo = brand.logoUrl ? await loadImage(brand.logoUrl) : null;
 
-  const totalSec = scenes.reduce((sum, s) => sum + s.durationSec, 0);
+  const scenesSec = scenes.reduce((sum, s) => sum + s.durationSec, 0);
+  // Close on a branded card when the café has set a logo or name.
+  const endCardSec = brand.logoUrl || brandName(brand) ? END_CARD_SEC : 0;
+  const totalSec = scenesSec + endCardSec;
 
   // Build the mixed audio track (music + per-scene narration), if any.
   const narrations: Array<{ url: string; offsetSec: number }> = [];
@@ -384,8 +449,13 @@ export async function renderStoryboardVideo(
         }
         acc += d;
       }
-      enterScene(idx);
-      drawScene(ctx, w, h, scenes[idx], images[idx], brand, logo);
+      if (elapsed >= scenesSec * 1000) {
+        enterScene(-1);
+        drawEndCard(ctx, w, h, brand, logo);
+      } else {
+        enterScene(idx);
+        drawScene(ctx, w, h, scenes[idx], images[idx], brand, logo);
+      }
       onProgress?.(Math.min(0.99, elapsed / totalMs));
       requestAnimationFrame(frame);
     };
