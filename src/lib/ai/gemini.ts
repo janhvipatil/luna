@@ -51,6 +51,10 @@ export class GeminiError extends Error {
 function friendly(status: number, message: string): string {
   if (status === 400 && /api key/i.test(message)) return "Your Gemini API key isn't valid — reconnect it in Profile → Gemini.";
   if (status === 403) return `Gemini refused this request (${message}). Paid features (video, AI images) need billing enabled on your Google project.`;
+  if (status === 429 && /limit: 0\b/.test(message)) {
+    return "This needs billing on your Google project — the free tier doesn't include it. Set up billing at aistudio.google.com, then try again.";
+  }
+  if (status === 503) return "Google's model is busy right now (high demand). Try again in a minute.";
   if (status === 429) return "Your Gemini key hit its rate limit or free-tier quota. Wait a minute, or enable billing for higher limits.";
   return `Gemini: ${message}`;
 }
