@@ -1,6 +1,7 @@
 // Records the Luna demo video for the final presentation (Playwright).
 //
-//   DEMO_EMAIL=... DEMO_PASSWORD=... BASE=https://luna-henna-theta.vercel.app //     node scripts/demo/record-demo.cjs
+//   DEMO_EMAIL=... DEMO_PASSWORD=... BASE=http://localhost:3100 \
+//   DEMO_NARRATION=durations.json node scripts/demo/record-demo.cjs
 //
 // Needs Playwright (npx playwright install chromium). The account should have
 // the "Maison Crumb" demo venue and three ideas set up (see README in this
@@ -14,9 +15,17 @@ const fs = require("fs");
 const BASE = process.env.BASE ?? "http://localhost:3000";
 const OUT = path.join(__dirname, "out");
 const ASSETS = __dirname;
-// The café's own photos for scenes 1 and 2 (override with DEMO_PHOTO_1/2).
-const PHOTO_1 = process.env.DEMO_PHOTO_1 ?? path.join(ASSETS, "maison-crumb-buns.jpg");
-const PHOTO_2 = process.env.DEMO_PHOTO_2 ?? PHOTO_1;
+// The café's own photos, one per scene (override with DEMO_PHOTO_1..4), and
+// its logo for the brand-kit step.
+const PHOTO_DEFAULT = path.join(ASSETS, "maison-crumb-buns.jpg");
+const PHOTOS = [1, 2, 3, 4].map((n) => process.env[`DEMO_PHOTO_${n}`] ?? PHOTO_DEFAULT);
+const LOGO = process.env.DEMO_LOGO ?? path.join(ASSETS, "maison-crumb-logo.png");
+// Narration line lengths in seconds ({id: sec}); each step lasts at least as
+// long as its line, so a voiceover can be laid over the recording.
+const NARRATION = process.env.DEMO_NARRATION
+  ? JSON.parse(fs.readFileSync(process.env.DEMO_NARRATION, "utf8"))
+  : {};
+const CLIP_SEC = Number(process.env.DEMO_CLIP_SEC ?? 6);
 const W = 1440, H = 900;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -86,7 +95,7 @@ async function click(page, locator, opts) {
   await lp.fill("#email", process.env.DEMO_EMAIL ?? "");
   await lp.fill("#password", process.env.DEMO_PASSWORD ?? "");
   await lp.click('button[type="submit"]');
-  await lp.waitForURL(BASE + "/", { timeout: 30000 });
+  await lp.waitForURL(BASE + "/", { timeout: 60000 });
   const state = path.join(OUT, "state.json");
   await login.storageState({ path: state });
   await login.close();
@@ -102,144 +111,192 @@ async function click(page, locator, opts) {
   const t0 = Date.now();
   const mark = (name) => console.log(`MARK ${name} ${((Date.now() - t0) / 1000).toFixed(2)}`);
 
-  // ── Intro: the café ───────────────────────────────────────────────────────
-  await page.goto(BASE + "/");
-  await page.waitForTimeout(2500);
-  await page.mouse.move(mouse.x, mouse.y);
-  await caption(page, "Maison Crumb — a new bakery café. The owner sends marketing ideas as voice notes.");
-  await sleep(3500);
-
-  // ── 1. Idea bank ─────────────────────────────────────────────────────────
-  await click(page, page.locator("header button:has-text('Ideas')"));
-  await page.waitForURL(/\/ideas/);
-  await page.waitForTimeout(1500);
-  await caption(page, "1 · Every idea lands in one place — typed or dictated, nothing lost in WhatsApp");
-  await sleep(1200);
-  const box = page.locator("textarea").first();
-  await click(page, box);
-  await box.pressSequentially("Show that we bake everything here every morning — smell of fresh bread on Torsplan", { delay: 28 });
-  await sleep(400);
-  await click(page, page.locator("button:has-text('Save idea')"));
-  await sleep(1800);
-  await moveTo(page, page.locator("text=sold out in an hour").first());
-  await sleep(1500);
-
-  // ── 2. Three options to pick from ────────────────────────────────────────
-  await caption(page, "2 · Turn an idea into a video plan — Luna drafts three different ads to pick from");
-  const ideaCard = page
-    .getByText("sold out in an hour")
-    .locator("xpath=ancestor::div[contains(@class,'items-start')][1]");
-  await click(page, ideaCard.locator("button:has-text('Storyboard')"));
-  await page.waitForSelector("#brief");
-  await sleep(1500);
-  const tone = page.locator("#tone");
-  await click(page, tone);
-  await tone.pressSequentially("cosy, mouth-watering", { delay: 40 });
-  await sleep(500);
-  await click(page, page.locator("button:has-text('Show me 3 ideas')"));
-  mark("draft_start");
-  await page.waitForSelector("text=Use this one", { timeout: 120000 });
-  mark("draft_done");
-  await sleep(1200);
-  const cards = page.locator("button:has-text('Use this one')");
-  for (let i = 0; i < 3; i++) {
-    await moveTo(page, cards.nth(i), { dy: -180 });
-    await sleep(1100);
-  }
-  await click(page, cards.nth(0));
-  await page.waitForURL(/\/storyboard\//, { timeout: 30000 });
-  await page.waitForTimeout(2500);
-
-  // ── 3. The storyboard ────────────────────────────────────────────────────
-  await caption(page, "3 · Every scene arrives ready — shot, caption and timing. Total length at a glance.");
-  await moveTo(page, page.locator("text=total").first());
-  await sleep(2200);
-  await click(page, page.locator("button:has-text('script')"));
-  await caption(page, "The exact caption / voiceover line for each scene");
-  await sleep(3000);
-  await click(page, page.locator("button:has-text('frames')"));
-  await sleep(800);
-
-  // Shot idea on scene 1 (Gemini-drafted scenes vary, so take the first idea)
-  const shotIdea = page.locator("button:has-text('+ ')").first();
-  if (await shotIdea.count()) {
-    await caption(page, "One-tap shot ideas — no prompt writing needed");
-    await click(page, shotIdea);
-    await sleep(1800);
-  }
-
-  // ── 4. Real food, not fake food ──────────────────────────────────────────
-  await caption(page, "4 · Real food, not fake food — use a photo of your actual buns");
-  // Upload a real photo to a scene, switch it to Video and start generating.
-  async function photoToVideo(n, file) {
-    await click(page, page.locator(`button[title^='${n}.']`).first());
-    await sleep(900);
-    await moveTo(page, page.locator("button:has-text('Use a photo of your café')"));
+  // Start a narration line now; hold(id) waits until it has finished.
+  const ends = {};
+  const say = (id) => {
+    mark(`say_${id}`);
+    ends[id] = Date.now() + (NARRATION[id] ?? 0) * 1000 + 400;
+  };
+  const hold = async (id) => {
+    const left = (ends[id] ?? 0) - Date.now();
+    if (left > 0) await sleep(left);
+  };
+  const upload = async (button, file) => {
+    await moveTo(page, button);
     const [chooser] = await Promise.all([
       page.waitForEvent("filechooser"),
       (async () => { await page.mouse.down(); await sleep(80); await page.mouse.up(); })(),
     ]);
     await chooser.setFiles(file);
-    await page.waitForTimeout(3500);
-    await click(page, page.locator("aside button:has-text('Video')"));
-    await sleep(600);
-    await click(page, page.locator("button:has-text('Regenerate scene'), button:has-text('Generate scene')").first());
+  };
+
+  // ── Intro ────────────────────────────────────────────────────────────────
+  await page.goto(BASE + "/");
+  await page.waitForTimeout(2500);
+  await page.mouse.move(mouse.x, mouse.y);
+  say("intro");
+  await caption(page, "Luna — short-form video for cafés. Today: Maison Crumb, a new bakery café.");
+  await sleep(3000);
+  await moveTo(page, page.locator("text=Your storyboards").first());
+  await hold("intro");
+
+  // ── 1. Brand kit ─────────────────────────────────────────────────────────
+  await page.goto(BASE + "/profile");
+  await page.waitForTimeout(1500);
+  await page.mouse.move(mouse.x, mouse.y);
+  const kit = page.locator("#brand_name");
+  await kit.scrollIntoViewIfNeeded();
+  await page.mouse.wheel(0, 120);
+  say("brand");
+  await caption(page, "1 · Set up your brand once — name, logo and colours");
+  await click(page, kit);
+  await kit.fill("");
+  await kit.pressSequentially("Maison Crumb", { delay: 45 });
+  await upload(page.locator("button:has-text('Upload logo')"), LOGO);
+  await page.waitForSelector("img[alt='Logo']", { timeout: 30000 });
+  await sleep(600);
+  await page.locator("input[name='color']").fill("#fff3e3");
+  for (let i = 0; i < 2; i++) {
+    await click(page, page.locator("button:has-text('Add colour')"));
+    await sleep(400);
   }
-  await photoToVideo(1, PHOTO_1);
-  mark("gen1_start");
-  await caption(page, "Then Gemini Omni Flash animates that exact photo into a video clip");
-  await sleep(2500);
-  await caption(page, "Same for scene 2 — another photo from the counter");
-  await photoToVideo(2, PHOTO_2);
-  mark("gen2_start");
-  await page.waitForSelector("video[loop]", { timeout: 300000 });
-  mark("gen2_done");
-  await caption(page, "Real food, now moving — each clip generated in under a minute for about $0.40");
-  await sleep(6000);
-  await click(page, page.locator("button[title^='1.']").first());
-  await page.waitForSelector("video[loop]", { timeout: 300000 });
-  mark("gen1_done");
-  await caption(page, "Scene 1 — also a real AI clip, with natural sound");
-  await sleep(5000);
-
-  // ── 5. Preview ───────────────────────────────────────────────────────────
-  await caption(page, "5 · Preview the whole reel");
-  await click(page, page.locator("header button:has-text('Play')"));
-  await sleep(9000);
-  await page.keyboard.press("Escape");
+  await moveTo(page, page.locator("text=Preview").last(), { dy: -120 });
   await sleep(800);
+  await click(page, page.locator("button:has-text('Save brand kit')"));
+  await page.waitForSelector("text=Brand kit saved", { timeout: 15000 });
+  await hold("brand");
+  await sleep(600);
 
-  // ── 6. Caption + export ──────────────────────────────────────────────────
-  await caption(page, "6 · A caption ready to paste on Instagram — then export the video");
-  await click(page, page.locator("header button:has-text('Export')"));
+  // ── 2. Idea bank ─────────────────────────────────────────────────────────
+  await page.goto(BASE + "/ideas");
+  await page.waitForTimeout(1500);
+  await page.mouse.move(mouse.x, mouse.y);
+  say("ideas");
+  await caption(page, "2 · Every idea lands in one place — typed or dictated");
+  const box = page.locator("textarea").first();
+  await click(page, box);
+  await box.pressSequentially("Show that we bake everything here every morning — smell of fresh bread on Torsplan", { delay: 24 });
+  await click(page, page.locator("button:has-text('Save idea')"));
   await sleep(1200);
+  await moveTo(page, page.locator("text=sold out in an hour").first());
+  await hold("ideas");
+
+  // ── 3. Three options to pick from ────────────────────────────────────────
+  const ideaCard = page
+    .getByText("sold out in an hour")
+    .locator("xpath=ancestor::div[contains(@class,'items-start')][1]");
+  await click(page, ideaCard.locator("button:has-text('Storyboard')"));
+  await page.waitForSelector("#brief");
+  say("draft");
+  await caption(page, "3 · Gemini drafts three different video ideas from it");
+  await sleep(1200);
+  const tone = page.locator("#tone");
+  await click(page, tone);
+  await tone.pressSequentially("cosy, mouth-watering", { delay: 40 });
+  await click(page, page.locator("button:has-text('Show me 3 ideas')"));
+  await hold("draft");
+  mark("draft_start");
+  await page.waitForSelector("text=Use this one", { timeout: 120000 });
+  mark("draft_done");
+  await sleep(800);
+  say("pick");
+  const cards = page.locator("button:has-text('Use this one')");
+  for (let i = 0; i < 3; i++) {
+    await moveTo(page, cards.nth(i), { dy: -180 });
+    await sleep(700);
+  }
+  await click(page, cards.nth(0));
+  await page.waitForURL(/\/storyboard\//, { timeout: 30000 });
+  await page.waitForTimeout(2000);
+
+  // ── 4. The storyboard ────────────────────────────────────────────────────
+  say("board");
+  await caption(page, "4 · Every scene arrives ready — shot, caption and timing");
+  await moveTo(page, page.locator("text=total").first());
+  await sleep(2500);
+  await click(page, page.locator("button:has-text('script')"));
+  await sleep(2600);
+  await click(page, page.locator("button:has-text('frames')"));
+  await hold("board");
+
+  // ── 5. Real photos → AI video ────────────────────────────────────────────
+  async function photoToVideo(n, file) {
+    await click(page, page.locator(`button[title^='${n}.']`).first());
+    await sleep(700);
+    await upload(page.locator("button:has-text('Use a photo of your café')"), file);
+    await page.waitForTimeout(3000);
+    await click(page, page.locator("aside button:has-text('Video')"));
+    await sleep(400);
+    const more = page.locator("button[aria-label='Increase duration']");
+    for (let i = 0; i < 10; i++) {
+      const sec = Number((await more.locator("xpath=preceding-sibling::span[1]").innerText()).replace(/\D/g, ""));
+      if (sec >= CLIP_SEC) break;
+      await click(page, more);
+    }
+    await click(page, page.locator("button:has-text('Regenerate scene'), button:has-text('Generate scene')").first());
+    mark(`gen${n}_start`);
+  }
+  say("photo1");
+  await caption(page, "5 · Real food — upload a photo, switch to Video, make it longer, generate");
+  await photoToVideo(1, PHOTOS[0]);
+  await hold("photo1");
+  say("photo2");
+  await caption(page, "Same for every scene — each clip starts from your own photo");
+  await photoToVideo(2, PHOTOS[1]);
+  await photoToVideo(3, PHOTOS[2]);
+  await photoToVideo(4, PHOTOS[3]);
+  await hold("photo2");
+  mark("gen_wait_start");
+  for (const n of [4, 1, 2, 3]) {
+    await click(page, page.locator(`button[title^='${n}.']`).first());
+    await page.waitForSelector("video[loop]", { timeout: 400000 });
+  }
+  mark("gen_wait_done");
+  await click(page, page.locator("button[title^='2.']").first());
+  await page.waitForTimeout(1500);
+  say("ready");
+  await caption(page, "Gemini Omni Flash brought each photo to life — about $0.60 a clip");
+  await sleep(4500);
+  await click(page, page.locator("button[title^='1.']").first());
+  await hold("ready");
+
+  // ── 6. Preview ───────────────────────────────────────────────────────────
+  say("preview");
+  await caption(page, "6 · Preview the whole reel — your logo and colours on every scene");
+  await click(page, page.locator("header button:has-text('Play')"));
+  const reelSec = 4 * CLIP_SEC;
+  await sleep(Math.max(reelSec * 1000 + 800, (NARRATION.preview ?? 0) * 1000));
+  await page.keyboard.press("Escape");
+  await sleep(600);
+
+  // ── 7. Caption + export ──────────────────────────────────────────────────
+  say("export");
+  await caption(page, "7 · A caption for your post — then export the video");
+  await click(page, page.locator("header button:has-text('Export')"));
+  await sleep(1000);
   await click(page, page.locator("button:has-text('Write it for me')"));
   await sleep(2500);
   await click(page, page.locator("button:has-text('Copy')").first());
-  await sleep(1500);
+  await sleep(800);
   await click(page, page.locator("button:has-text('Quick export')"));
+  await hold("export");
   mark("export_start");
-  await page.waitForSelector("video[autoplay][controls]", { timeout: 180000 });
+  await page.waitForSelector("video[autoplay][controls]", { timeout: 240000 });
   mark("export_done");
-  await caption(page, "Done — a vertical reel and its caption, in minutes");
-  await sleep(5000);
-  await page.keyboard.press("Escape");
-  await sleep(600);
-
-  // ── 7. Bring your own key ────────────────────────────────────────────────
-  await page.goto(BASE + "/profile#gemini");
-  await page.waitForTimeout(2000);
-  await page.mouse.move(mouse.x, mouse.y);
-  await page.locator("#gemini").scrollIntoViewIfNeeded();
-  await caption(page, "7 · Runs on the café's own Gemini key — drafts & voiceover free, AI video at Google's price");
-  await moveTo(page, page.locator("#gemini"));
-  await sleep(4500);
+  // Let the exported video reach its branded end card.
   await caption(page, "");
-  await sleep(600);
+  await page.evaluate(() => {
+    const v = document.querySelector("video[autoplay][controls]");
+    if (v && Number.isFinite(v.duration)) v.currentTime = Math.max(0, v.duration - 3.2);
+  });
+  say("outro");
+  await caption(page, "Done — a branded reel and its caption, in minutes");
+  await sleep(Math.max(5000, (NARRATION.outro ?? 0) * 1000 + 800));
+  await caption(page, "");
+  await sleep(500);
 
   const video = page.video();
   await ctx.close();
   console.log("video:", await video.path());
-  console.log("storyboard created during demo (for cleanup) — see dashboard");
   await browser.close();
 })();
