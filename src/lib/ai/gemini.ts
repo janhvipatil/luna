@@ -54,6 +54,7 @@ function friendly(status: number, message: string): string {
   if (status === 429 && /limit: 0\b/.test(message)) {
     return "This needs billing on your Google project — the free tier doesn't include it. Set up billing at aistudio.google.com, then try again.";
   }
+  if (status === 402) return "Your Google project is out of prepaid credit. Add credit in AI Studio (ai.studio/projects → Billing), then try again.";
   if (status === 503) return "Google's model is busy right now (high demand). Try again in a minute.";
   if (status === 429) return "Your Gemini key hit its rate limit or free-tier quota. Wait a minute, or enable billing for higher limits.";
   return `Gemini: ${message}`;
