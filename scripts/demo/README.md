@@ -14,7 +14,7 @@ The demo café is fictional: **Maison Crumb**, a new French bakery in Torsplan
 - Brand look: white captions, serif font
 - Three ideas in the idea bank (one mentioning "sold out in an hour")
 
-`maison-crumb-buns.jpg` is an Unsplash photo (Unsplash License) standing in for
+`maison-crumb-buns.jpg` ("Cardamom buns", Wikimedia Commons, CC0) stands in for
 the café's own photo.
 
 ## Run
