@@ -11,10 +11,21 @@ const PUBLIC_PREFIXES = [
   "/api/providers",
   // Public marketing site.
   "/welcome",
+  // Keep-alive ping (Vercel cron).
+  "/api/health",
   "/pricing",
   "/terms",
   "/privacy",
 ];
+
+/** Auth error codes meaning the stored session can never be refreshed. */
+const DEAD_SESSION_CODES = new Set([
+  "refresh_token_not_found",
+  "refresh_token_already_used",
+  "session_not_found",
+  "session_expired",
+  "bad_jwt",
+]);
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -51,8 +62,24 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
 
   // Do not run code between createServerClient and getClaims() — it can log
   // users out at random. getClaims() validates and refreshes the session.
-  const { data } = await supabase.auth.getClaims();
+  const { data, error } = await supabase.auth.getClaims();
   const claims = data?.claims ?? null;
+
+  // A session the server no longer recognises (e.g. its refresh token was
+  // revoked or the project was restored) would otherwise linger in the cookie
+  // and fail on every request. Clear it so the user can simply sign in again.
+  if (error && DEAD_SESSION_CODES.has((error as { code?: string }).code ?? "")) {
+    for (const cookie of request.cookies.getAll()) {
+      if (cookie.name.startsWith("sb-")) response.cookies.delete(cookie.name);
+    }
+  }
+
+  /** Redirect while keeping any cookies the session refresh set or cleared. */
+  const redirectTo = (url: URL) => {
+    const redirect = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+    return redirect;
+  };
 
   const { pathname } = request.nextUrl;
 
@@ -60,14 +87,14 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   if (!claims && pathname === "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/welcome";
-    return NextResponse.redirect(url);
+    return redirectTo(url);
   }
 
   if (!claims && !isPublic(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(url);
+    return redirectTo(url);
   }
 
   // Signed-in users shouldn't sit on the auth screens.
@@ -75,7 +102,7 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     const url = request.nextUrl.clone();
     url.pathname = "/";
     url.search = "";
-    return NextResponse.redirect(url);
+    return redirectTo(url);
   }
 
   return response;
