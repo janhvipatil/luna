@@ -15,9 +15,9 @@ import { createInteraction, OMNI_PRICE_PER_SECOND, OMNI_VIDEO_MODEL } from "../a
  * uploads for editing are region-restricted).
  *
  * Generation is a single synchronous call (as in Google's Omni skill); the
- * generate route allows up to 5 minutes. The video comes back as a Files API
- * URI which we download here and hand on as a data URL, so the route can
- * re-host it in Storage without needing the key.
+ * generate route allows up to 5 minutes (a 4 s 720p clip takes ~25 s). The
+ * video comes back inline (base64) — URI delivery would require `store: true`
+ * — and is handed on as a data URL for the route to re-host in Storage.
  *
  * @see https://ai.google.dev/gemini-api/docs/omni
  */
@@ -71,7 +71,6 @@ export const geminiOmniProvider: Provider = {
       input,
       response_format: {
         type: "video",
-        delivery: "uri",
         aspect_ratio: veoAspect(req.aspect),
         duration: omniDuration(req.durationSec),
         resolution: RESOLUTION,
