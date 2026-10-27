@@ -32,7 +32,14 @@ export const PHOTOS: Photo[] = [
   { id: "1600271886742-f049cd451bba", tags: ["juice", "orange juice", "fresh juice", "breakfast drink"] },
 
   // Bakery & desserts
-  { id: "1555507036-ab1f4038808a", tags: ["croissant", "buns", "bun", "cardamom bun", "cinnamon bun", "pastry", "pastries", "oven", "flour", "bake", "baked", "bakery", "flaky"] },
+  // Bright bun photos from Wikimedia Commons (CC0 / public domain) — the id is
+  // the full image URL.
+  { id: "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/72/Cardamom_buns.jpg/1280px-Cardamom_buns.jpg", tags: ["cardamom bun", "cardamom buns", "buns", "bun", "basket", "pastries", "bakery", "baked", "fresh"] },
+  { id: "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d7/One_layer_of_cardamom_buns_on_grate.jpg/1280px-One_layer_of_cardamom_buns_on_grate.jpg", tags: ["oven", "tray", "batch", "out of the oven", "buns", "baked", "bake", "bakery", "cardamom"] },
+  { id: "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/31/Cinnamon_bun_-_Milfey_Patisserie_2026-08-31.jpg/1280px-Cinnamon_bun_-_Milfey_Patisserie_2026-08-31.jpg", tags: ["cinnamon bun", "cinnamon roll", "swirl", "pastry", "bun", "plate", "flaky", "bakery"] },
+  { id: "https://upload.wikimedia.org/wikipedia/commons/3/3a/Kanelbulle.jpg", tags: ["kanelbulle", "pearl sugar", "swedish", "fika", "bun", "cinnamon", "sugar", "glaze"] },
+  { id: "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/67/Cinnamon_roll_-_Clifton_Road_Coffee_2026-03-17.jpg/1280px-Cinnamon_roll_-_Clifton_Road_Coffee_2026-03-17.jpg", tags: ["cinnamon roll", "coffee and a bun", "fika", "flat white", "bun", "table", "morning"] },
+  { id: "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/34/Cinnamon_bun_-_Bread_%26_Milk_2024-11-18.jpg/1280px-Cinnamon_bun_-_Bread_%26_Milk_2024-11-18.jpg", tags: ["pulling apart", "pull apart", "tear", "first bite", "bun", "pastry", "knife", "plate"] },
   { id: "1509440159596-0249088772ff", tags: ["bread", "sourdough", "loaf", "loaves", "bakery", "baker", "bake", "bake on site", "baked on site"] },
   { id: "1517686469429-8bdb88b9f907", tags: ["dough", "kneading", "baker", "hands", "flour", "5am", "bakery"] },
   { id: "1495147466023-ac5c588e2e94", tags: ["tart", "tarts", "pastry counter", "bake case", "pastries", "counter"] },
@@ -112,12 +119,12 @@ export const PHOTOS: Photo[] = [
 
 /** Fallback pools when nothing in the prompt matches a tag. */
 const STYLE_FALLBACK: Partial<Record<VisualStyle, string[]>> = {
-  "food-closeup": ["1569718212165-3a8278d5f624", "1555507036-ab1f4038808a", "1533134242443-d4fd215305ad", "1567620905732-2d1ec7ab7445"],
+  "food-closeup": ["1569718212165-3a8278d5f624", "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/31/Cinnamon_bun_-_Milfey_Patisserie_2026-08-31.jpg/1280px-Cinnamon_bun_-_Milfey_Patisserie_2026-08-31.jpg", "1533134242443-d4fd215305ad", "1567620905732-2d1ec7ab7445"],
   "flat-lay": ["1504754524776-8f4f37790ca0", "1424847651672-bf20a4b0982b", "1504674900247-0877df9cc836", "1611143669185-af224c5e3252"],
   "cozy-ambient": ["1554118811-1e0d58224f24", "1445116572660-236099ec97a0", "1453614512568-c4024d13c247", "1521017432531-fbd92d768814"],
   cinematic: ["1577219491135-ce391730fb2c", "1514362545857-3bc16c4c7d1b", "1414235077428-338989a2e8c0"],
   photographic: ["1533777857889-4be7c70b33f7", "1509042239860-f550ce710b93", "1541519227354-08fa5d50c44d"],
-  "product-shot": ["1509042239860-f550ce710b93", "1555507036-ab1f4038808a", "1515823064-d6e0c04616a7"],
+  "product-shot": ["1509042239860-f550ce710b93", "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/31/Cinnamon_bun_-_Milfey_Patisserie_2026-08-31.jpg/1280px-Cinnamon_bun_-_Milfey_Patisserie_2026-08-31.jpg", "1515823064-d6e0c04616a7"],
   retro: ["1501339847302-ac426a4a7cbb", "1514933651103-005eec06c04b"],
 };
 
@@ -145,26 +152,31 @@ export function pickPhoto(
   opts: { style?: VisualStyle; seed?: number; avoid?: string[] } = {},
 ): string {
   const haystack = ` ${text.toLowerCase().replace(/[^a-z0-9é\s]/g, " ").replace(/\s+/g, " ")} `;
-  let best: string[] = [];
-  let bestScore = 0;
+  // Score every photo; the first tag is its subject, so matching it matters most.
+  const scores = new Map<string, number>();
   for (const photo of PHOTOS) {
     let score = 0;
     photo.tags.forEach((tag, i) => {
-      // The first tag is the photo's subject — matching it matters most.
       if (haystack.includes(` ${tag} `)) score += tag.split(" ").length * 3 + (i === 0 ? 6 : Math.max(0, 3 - i));
     });
-    if (score > bestScore) {
-      bestScore = score;
-      best = [photo.id];
-    } else if (score === bestScore && score > 0) {
-      best.push(photo.id);
-    }
+    if (score > 0) scores.set(photo.id, score);
   }
-  const matched = best.length ? best : (opts.style && STYLE_FALLBACK[opts.style]) || DEFAULT_POOL;
-  // Among equally good matches, skip photos already used (e.g. earlier scenes
-  // of the same storyboard) so a storyboard doesn't repeat one shot.
-  const fresh = matched.filter((id) => !opts.avoid?.includes(id));
-  const pool = fresh.length ? fresh : matched;
+  const fallback = (opts.style && STYLE_FALLBACK[opts.style]) || DEFAULT_POOL;
+  const isFresh = (id: string) => !opts.avoid?.includes(id);
+  // Best-scoring photos not already used in this storyboard (so scenes don't
+  // repeat one shot): drop to the next tier, then the style's pool, before
+  // allowing a repeat.
+  const tiers = [...new Set(scores.values())].sort((a, b) => b - a);
+  let pool: string[] = [];
+  for (const t of tiers) {
+    pool = [...scores].filter(([id, sc]) => sc === t && isFresh(id)).map(([id]) => id);
+    if (pool.length) break;
+  }
+  if (!pool.length) pool = fallback.filter(isFresh);
+  if (!pool.length) {
+    const top = tiers[0];
+    pool = top ? [...scores].filter(([, sc]) => sc === top).map(([id]) => id) : fallback;
+  }
   const pick = hash(text) + (opts.seed ?? 0);
   return pool[pick % pool.length];
 }
@@ -180,6 +192,8 @@ export function photoUrl(
   height?: number,
   { quality = 80, format = "auto" }: { quality?: number; format?: "auto" | "jpg" } = {},
 ): string {
+  // Non-Unsplash library photos (Wikimedia Commons) are stored as full URLs.
+  if (id.startsWith("https://")) return id;
   const size = height ? `&w=${width}&h=${height}` : `&w=${width}`;
   const fmt = format === "jpg" ? "fm=jpg" : "auto=format";
   return `https://images.unsplash.com/photo-${id}?${fmt}&fit=crop${size}&q=${quality}`;

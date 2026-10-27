@@ -74,7 +74,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: "bake-of-the-day",
-    cover: "1555507036-ab1f4038808a",
+    cover: "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/72/Cardamom_buns.jpg/1280px-Cardamom_buns.jpg",
     name: "Fresh Out the Oven",
     description: "Morning bake reveal — perfect for bakeries and pastry counters.",
     format: "4:5",
