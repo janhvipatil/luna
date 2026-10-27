@@ -6,6 +6,8 @@ import { FORMAT_PRESETS } from "@/lib/constants";
 import { isVideoUrl } from "@/lib/utils";
 import { buildPlaceholderSvg } from "@/lib/providers/placeholder";
 import { composeStoryboard, toTempFile, type RenderScene } from "@/lib/render/compose";
+import { buildEndCard, END_CARD_SEC, hasEndCard } from "@/lib/render/endCard";
+import { parseBrandKit } from "@/lib/brand";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -88,6 +90,17 @@ export async function POST(request: Request) {
         narration.push({ path: await toTempFile(bytes, "mp3"), offsetSec: offset });
       }
       offset += scene.durationSec;
+    }
+
+    // Close on the café's branded card, like the browser export.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("brand_kit")
+      .eq("id", user.id)
+      .maybeSingle();
+    const brand = parseBrandKit(profile?.brand_kit);
+    if (hasEndCard(brand)) {
+      scenes.push({ image: await buildEndCard(brand, w, h), durationSec: END_CARD_SEC });
     }
 
     const musicPath = sb.musicUrl
