@@ -25,6 +25,7 @@ export type VisualStyle =
   | "food-closeup"
   | "flat-lay"
   | "cozy-ambient"
+  | "cartoon"
   | "cinematic"
   | "3d-render"
   | "anime"
@@ -83,6 +84,8 @@ export interface Storyboard {
   isShared: boolean;
   /** Optional background-music track mixed into the export. */
   musicUrl?: string;
+  /** The caption the café pastes when posting the video (Instagram, TikTok). */
+  postCaption?: string;
   createdAt: number;
   updatedAt: number;
 }

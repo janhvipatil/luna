@@ -43,7 +43,7 @@ interface LunaState {
   createFromTemplate: (template: Template, titleOverride?: string) => string;
   updateStoryboard: (
     id: string,
-    patch: Partial<Pick<Storyboard, "title" | "description" | "format" | "musicUrl">>,
+    patch: Partial<Pick<Storyboard, "title" | "description" | "format" | "musicUrl" | "postCaption">>,
   ) => void;
   deleteStoryboard: (id: string) => void;
   duplicateStoryboard: (id: string) => string | undefined;

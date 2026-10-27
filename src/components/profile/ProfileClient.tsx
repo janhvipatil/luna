@@ -95,11 +95,12 @@ export function ProfileClient() {
         <Card id="venue" className="mb-5 scroll-mt-20 p-5">
           <div className="mb-1 flex items-center justify-between gap-2">
             <h2 className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-strong">
-              <Store className="h-4 w-4" /> Your venue
+              <Store className="h-4 w-4" /> About your café
             </h2>
           </div>
           <p className="mb-4 text-xs text-muted">
-            Luna fills your venue&apos;s details into every template, caption idea and AI draft.
+            The facts Luna writes into every template, caption and AI draft — your name, what
+            you&apos;re known for, where you are and how it feels.
           </p>
           <form action={venueAction} className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -219,9 +220,10 @@ export function ProfileClient() {
 
         {/* Brand kit */}
         <Card className="mb-5 p-5">
-          <h2 className="mb-1 text-sm font-medium text-muted-strong">Brand kit</h2>
+          <h2 className="mb-1 text-sm font-medium text-muted-strong">Brand look</h2>
           <p className="mb-4 text-xs text-muted">
-            Applied to scene captions and exports across your storyboards.
+            How every video looks: caption colour, font and a logo watermark. Photos of your café
+            are added per scene in the editor with &ldquo;Use a photo of your café&rdquo;.
           </p>
           <form action={brandAction} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
@@ -266,7 +268,7 @@ export function ProfileClient() {
             <Feedback state={brandState} />
             <div className="flex justify-end">
               <Button type="submit" loading={savingBrand}>
-                Save brand kit
+                Save brand look
               </Button>
             </div>
           </form>

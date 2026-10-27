@@ -476,6 +476,57 @@ export const TEMPLATES: Template[] = [
     ],
   },
 
+  // ── From café user testing ───────────────────────────────────────────────
+  {
+    id: "afternoon-pick-me-up",
+    cover: "1534040385115-33dcb3acba5b",
+    name: "Afternoon Pick-Me-Up",
+    description: "Spread the crowd beyond lunch — an off-peak coffee-and-cake deal for remote workers.",
+    format: "9:16",
+    accent: "#0f766e",
+    category: "promo",
+    emoji: "🕒",
+    scenes: [
+      { title: "Slump", prompt: "Laptop on a sunny window table at 3pm, half-finished coffee, quiet café, afternoon light", script: "3pm slump? We've got you.", style: "cozy-ambient", medium: "image", durationSec: 3 },
+      { title: "Fresh cup", prompt: "Fresh flat white with latte art set down beside a slice of cake, steam rising", script: "Coffee + cake, after lunch.", style: "food-closeup", medium: "video", durationSec: 3 },
+      { title: "Quiet tables", prompt: "Calm, spacious café interior in the afternoon with free tables and plugs, plants", script: "Quiet tables, fast Wi-Fi, no rush.", style: "cozy-ambient", medium: "image", durationSec: 3 },
+      { title: "CTA", prompt: "Overhead of a coffee and cake on a wooden table next to a notebook, golden light", script: "Every weekday afternoon at {venue}.", style: "flat-lay", medium: "image", durationSec: 3 },
+    ],
+  },
+  {
+    id: "evening-workshop",
+    cover: "1424847651672-bf20a4b0982b",
+    name: "Evening Workshop",
+    description: "Sip & paint, latte-art classes, networking nights — fill your evening events.",
+    format: "9:16",
+    accent: "#a21caf",
+    category: "events",
+    emoji: "🎨",
+    scenes: [
+      { title: "Hook", prompt: "Friends laughing around a long table in a cosy café at night, string lights, drinks and creative supplies", script: "Your new favourite night out.", style: "cozy-ambient", medium: "video", durationSec: 3 },
+      { title: "The activity", prompt: "Close-up of hands creating at the table — painting, pouring latte art or crafting — warm evening light", script: "Learn something new, glass in hand.", style: "cinematic", medium: "video", durationSec: 4 },
+      { title: "Treats", prompt: "Overhead of wine, coffee and sharing snacks on a busy workshop table", script: "Drinks and snacks included.", style: "flat-lay", medium: "image", durationSec: 3 },
+      { title: "Proud moment", prompt: "Group holding up what they made, smiling, cosy café evening atmosphere", script: "Take home what you made.", style: "photographic", medium: "image", durationSec: 3 },
+      { title: "CTA", prompt: "Café exterior at dusk with warm light inside and a chalkboard sign announcing the workshop", script: "Spots are limited — book at {venue}.", style: "cozy-ambient", medium: "image", durationSec: 3 },
+    ],
+  },
+  {
+    id: "cartoon-mascot",
+    cover: "1551024601-bec78aea704b",
+    name: "Cartoon Fun",
+    description: "A playful cartoon short starring your signature treat — charming, never fake-real.",
+    format: "9:16",
+    accent: "#db2777",
+    category: "social",
+    emoji: "🧁",
+    scenes: [
+      { title: "Wake up", prompt: "Cute cartoon {signature} character waking up in a sunny café window, yawning and stretching", script: "Good morning from {venue}!", style: "cartoon", medium: "video", durationSec: 3 },
+      { title: "Get ready", prompt: "Cartoon {signature} character getting ready — sprinkles as glitter, a coffee cup friend cheering", script: "Getting fresh for you…", style: "cartoon", medium: "video", durationSec: 3 },
+      { title: "Big reveal", prompt: "Cartoon {signature} character striking a pose on the café counter with sparkles", script: "Ta-da! Fresh today.", style: "cartoon", medium: "image", durationSec: 3 },
+      { title: "CTA", prompt: "Cartoon café storefront with the character waving from the door, bright cheerful colours", script: "Come say hi at {venue}.", style: "cartoon", medium: "image", durationSec: 3 },
+    ],
+  },
+
 ];
 
 /** A copy of a template with venue tokens filled in, ready to create from. */

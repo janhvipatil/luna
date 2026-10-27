@@ -30,7 +30,7 @@ export function ProviderStatusChip() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface/60 px-2.5 py-1.5 text-xs text-muted-strong transition-colors hover:border-border-strong hover:text-foreground"
+        className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-border bg-surface/60 px-2.5 py-1.5 text-xs text-muted-strong transition-colors hover:border-border-strong hover:text-foreground"
       >
         <Cpu className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">{label}</span>

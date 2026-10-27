@@ -27,6 +27,8 @@ export interface RenderOptions {
   fps?: number;
   /** Brand styling applied to captions and a logo watermark. */
   brand?: BrandKit;
+  /** false = a silent export ("video only": no music or voiceover). */
+  includeAudio?: boolean;
 }
 
 export interface RenderResult {
@@ -298,7 +300,7 @@ async function prepareAudio(
 
 export async function renderStoryboardVideo(
   storyboard: Storyboard,
-  { onProgress, maxDimension = 720, fps = 30, brand = {} }: RenderOptions = {},
+  { onProgress, maxDimension = 720, fps = 30, brand = {}, includeAudio = true }: RenderOptions = {},
 ): Promise<RenderResult> {
   const scenes = storyboard.scenes.filter((s) => s.durationSec > 0);
   if (scenes.length === 0) throw new Error("This storyboard has no scenes to export.");
@@ -327,7 +329,7 @@ export async function renderStoryboardVideo(
     if (s.narrationUrl) narrations.push({ url: s.narrationUrl, offsetSec: acc });
     acc += s.durationSec;
   }
-  const audio = await prepareAudio(storyboard.musicUrl, narrations, totalSec);
+  const audio = includeAudio ? await prepareAudio(storyboard.musicUrl, narrations, totalSec) : null;
 
   const { mimeType, extension } = pickMimeType();
   const stream = canvas.captureStream(fps);

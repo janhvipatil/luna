@@ -13,6 +13,7 @@ export const VISUAL_STYLES: Array<{ id: VisualStyle; label: string; blurb: strin
   { id: "food-closeup", label: "Food Close-up", blurb: "Macro, glistening, mouth-watering" },
   { id: "flat-lay", label: "Flat Lay", blurb: "Overhead table spread" },
   { id: "cozy-ambient", label: "Cozy Ambience", blurb: "Warm interiors, golden light" },
+  { id: "cartoon", label: "Cartoon", blurb: "Fun and playful, never fake-real" },
   { id: "cinematic", label: "Cinematic", blurb: "Filmic lighting, shallow depth" },
   { id: "photographic", label: "Photographic", blurb: "Realistic, editorial" },
   { id: "product-shot", label: "Product Shot", blurb: "Clean studio backdrop" },

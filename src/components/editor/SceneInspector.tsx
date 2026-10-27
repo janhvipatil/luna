@@ -294,7 +294,7 @@ export function SceneInspector({
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={startFrame} alt="Start frame" className="h-10 w-10 rounded object-cover" />
                   <p className="text-[11px] leading-snug text-muted">
-                    Veo animates this still. Upload a photo to animate your real dish instead.
+                    Veo animates this still. Use a photo of your café to animate your real dish instead.
                   </p>
                 </>
               ) : (
@@ -325,8 +325,12 @@ export function SceneInspector({
             disabled={uploading}
           >
             {uploading ? <Spinner className="h-3.5 w-3.5" /> : <Upload className="h-3.5 w-3.5" />}
-            Use my photo
+            Use a photo of your café
           </Button>
+          <p className="mt-1 text-[11px] leading-snug text-muted">
+            A real photo of your dish, drink or space becomes this scene&apos;s image — and video
+            scenes animate it, so customers see what you really serve.
+          </p>
           {uploadError && <p className="mt-1 text-[11px] text-danger">{uploadError}</p>}
         </div>
 

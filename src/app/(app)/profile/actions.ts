@@ -75,7 +75,7 @@ export async function updateBrandKit(
   if (error) return { error: error.message };
 
   revalidatePath("/profile");
-  return { ok: true, message: "Brand kit saved." };
+  return { ok: true, message: "Brand look saved." };
 }
 
 type ServerClient = Awaited<ReturnType<typeof createClient>>;

@@ -56,6 +56,7 @@ export function rowToStoryboard(row: StoryboardRow): Storyboard {
     scenes: scenesRaw.map(parseScene),
     isShared: Boolean(row.is_shared),
     musicUrl: row.music_url ?? undefined,
+    postCaption: row.post_caption ?? undefined,
     createdAt: new Date(row.created_at).getTime(),
     updatedAt: new Date(row.updated_at).getTime(),
   };
@@ -68,7 +69,10 @@ export function rowToStoryboard(row: StoryboardRow): Storyboard {
  */
 export function storyboardToRow(
   sb: Storyboard,
-): Pick<StoryboardRow, "id" | "title" | "description" | "format" | "is_shared" | "music_url"> & {
+): Pick<
+  StoryboardRow,
+  "id" | "title" | "description" | "format" | "is_shared" | "music_url" | "post_caption"
+> & {
   scenes: Json;
 } {
   const scenes = sb.scenes.map((sc) => ({
@@ -93,6 +97,7 @@ export function storyboardToRow(
     format: sb.format,
     is_shared: sb.isShared,
     music_url: sb.musicUrl ?? null,
+    post_caption: sb.postCaption ?? null,
     scenes: scenes as unknown as Json,
   };
 }

@@ -90,6 +90,7 @@ export function EditorWorkspace({ storyboard }: { storyboard: Storyboard }) {
             <EditableTitle
               value={storyboard.title}
               onCommit={(title) => updateStoryboard(storyboard.id, { title })}
+              className="max-w-[12rem] sm:max-w-[16rem] xl:max-w-[24rem]"
             />
             <Badge tone="accent">{storyboard.format}</Badge>
             <SaveIndicator />

@@ -18,7 +18,7 @@ const STEPS = [
   {
     icon: Clapperboard,
     title: "Pick a format",
-    body: "Start from 27 proven café & restaurant templates — signature dish, new menu drop, happy hour, behind the scenes — or describe your idea and let AI draft it.",
+    body: "Start from 30 proven café & restaurant templates — signature dish, new menu drop, happy hour, behind the scenes — or describe your idea and let AI draft it.",
   },
   {
     icon: Palette,

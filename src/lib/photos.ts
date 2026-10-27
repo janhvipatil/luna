@@ -124,7 +124,7 @@ const STYLE_FALLBACK: Partial<Record<VisualStyle, string[]>> = {
 const DEFAULT_POOL = STYLE_FALLBACK["food-closeup"]!;
 
 /** Styles that are illustrations — photos would be wrong for them. */
-export const NON_PHOTO_STYLES: VisualStyle[] = ["flat-illustration", "anime", "3d-render"];
+export const NON_PHOTO_STYLES: VisualStyle[] = ["flat-illustration", "anime", "3d-render", "cartoon"];
 
 function hash(input: string): number {
   let h = 2166136261;

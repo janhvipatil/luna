@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Coffee, KeyRound, Plus, Sparkles, Store, Wand2 } from "lucide-react";
+import { ArrowRight, Coffee, KeyRound, Lightbulb, Plus, Sparkles, Store, Wand2 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { Button, Card } from "@/components/ui";
 import { NewStoryboardModal } from "./NewStoryboardModal";
@@ -83,6 +83,10 @@ export function Dashboard() {
         right={
           <>
             <ProviderStatusChip />
+            <Button size="sm" variant="ghost" onClick={() => router.push("/ideas")}>
+              <Lightbulb className="h-4 w-4" />
+              <span className="hidden sm:inline">Ideas</span>
+            </Button>
             <Button size="sm" variant="secondary" onClick={() => setDraftOpen(true)}>
               <Wand2 className="h-4 w-4" />
               <span className="hidden sm:inline">Draft with AI</span>
@@ -142,7 +146,7 @@ export function Dashboard() {
               <Store className="h-4 w-4 text-matcha-strong" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-foreground">Tell Luna about your venue</p>
+              <p className="text-sm font-medium text-foreground">Tell Luna about your café</p>
               <p className="text-xs text-muted">
                 Add your name, signature item and vibe — every template and AI draft gets written
                 for you.

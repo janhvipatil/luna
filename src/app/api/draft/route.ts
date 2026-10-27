@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import type { AspectRatio } from "@/lib/types";
 import type { DraftRequest } from "@/lib/draft/types";
-import { draftFromTemplate } from "@/lib/draft/fallback";
+import { draftFromTemplate, draftOptionsFromTemplate } from "@/lib/draft/fallback";
 import { draftWithClaude, isClaudeConfigured } from "@/lib/draft/claude";
 import { parseVenue } from "@/lib/venue";
-import { draftWithGemini } from "@/lib/draft/gemini";
+import { draftOptionsWithGemini, draftWithGemini } from "@/lib/draft/gemini";
 import { createClient } from "@/lib/supabase/server";
 import { getAiContext } from "@/lib/ai/context";
 
@@ -37,6 +37,8 @@ export async function POST(request: Request) {
   const venue = parseVenue(body.venue);
 
   const req: DraftRequest = { brief: brief.slice(0, 1000), format, tone, venue };
+  // "options: true" → three distinct concepts to pick from (Quick create).
+  const wantOptions = (body as { options?: unknown }).options === true;
 
   // The user's own Gemini key first, then the operator's Claude key, then a
   // deterministic template — drafting always works.
@@ -45,6 +47,27 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   const ctx = await getAiContext(supabase, user?.id);
+
+  if (wantOptions) {
+    if (ctx.geminiKey) {
+      try {
+        const options = await draftOptionsWithGemini(req, ctx.geminiKey);
+        return NextResponse.json({ options, source: "gemini" });
+      } catch (err) {
+        console.error("Gemini options failed, using templates:", err);
+      }
+    }
+    if (isClaudeConfigured()) {
+      try {
+        const [, ...rest] = draftOptionsFromTemplate(req);
+        return NextResponse.json({ options: [await draftWithClaude(req), ...rest], source: "claude" });
+      } catch (err) {
+        console.error("Claude draft failed, using templates:", err);
+      }
+    }
+    return NextResponse.json({ options: draftOptionsFromTemplate(req), source: "template" });
+  }
+
   if (ctx.geminiKey) {
     try {
       const storyboard = await draftWithGemini(req, ctx.geminiKey);

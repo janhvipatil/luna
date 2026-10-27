@@ -47,7 +47,7 @@ export const PLANS: Plan[] = [
       "Everything in Taste",
       "No watermark",
       "Animate your own dish photos",
-      "Brand kit: colours, font & logo",
+      "Brand look: colours, font & logo",
       "Voiceover & background music",
     ],
     cta: "Start with Café",

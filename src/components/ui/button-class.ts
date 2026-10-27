@@ -31,7 +31,7 @@ export function buttonClass({
   className,
 }: { variant?: ButtonVariant; size?: ButtonSize; className?: string } = {}) {
   return cn(
-    "inline-flex items-center justify-center font-medium transition-colors select-none",
+    "inline-flex items-center justify-center whitespace-nowrap font-medium transition-colors select-none",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-0",
     "disabled:opacity-50 disabled:pointer-events-none",
     BUTTON_VARIANTS[variant],

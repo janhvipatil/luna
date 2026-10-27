@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CreditCard, LogOut, User as UserIcon, Users } from "lucide-react";
+import { CreditCard, Lightbulb, LogOut, User as UserIcon, Users } from "lucide-react";
 import { Avatar } from "./Avatar";
 import { displayName, useUser } from "@/lib/data/UserContext";
 import { signOut } from "@/app/(auth)/actions";
@@ -46,6 +46,12 @@ export function UserMenu() {
               className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-foreground hover:bg-surface-2"
             >
               <Users className="h-4 w-4 text-muted" /> Members
+            </Link>
+            <Link
+              href="/ideas"
+              className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-foreground hover:bg-surface-2"
+            >
+              <Lightbulb className="h-4 w-4 text-muted" /> Idea bank
             </Link>
             <Link
               href="/pricing"

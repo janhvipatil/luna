@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, Film, Server, AlertTriangle } from "lucide-react";
+import { Download, Film, Server, AlertTriangle, ChevronDown } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui";
 import type { Storyboard } from "@/lib/types";
@@ -9,6 +9,7 @@ import { FORMAT_PRESETS } from "@/lib/constants";
 import { formatDuration } from "@/lib/utils";
 import { useBrandKit } from "@/lib/data/UserContext";
 import { MusicControl } from "./MusicControl";
+import { PostCaption } from "./PostCaption";
 import { downloadBlob, renderStoryboardVideo, type RenderResult } from "@/lib/export/renderVideo";
 
 type Phase = "idle" | "rendering" | "done" | "error";
@@ -88,6 +89,32 @@ export function ExportModal({
       setPhase("error");
     }
   }
+
+  const [extra, setExtra] = useState<string | null>(null);
+
+  /** One-off downloads tucked under "More downloads" (most people won't need them). */
+  async function downloadExtra(key: string, run: () => Promise<void>) {
+    setExtra(key);
+    try {
+      await run();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Download failed.");
+    } finally {
+      setExtra(null);
+    }
+  }
+
+  const fetchAndSave = async (url: string, name: string) => {
+    const blob = await fetch(url).then((r) => {
+      if (!r.ok) throw new Error(`Download failed (${r.status}).`);
+      return r.blob();
+    });
+    downloadBlob(blob, name);
+  };
+
+  const voiceovers = storyboard.scenes
+    .map((s, i) => ({ scene: s, n: i + 1 }))
+    .filter(({ scene }) => scene.narrationUrl);
 
   async function handleDownload() {
     const name = `${slugify(storyboard.title)}.${result?.extension ?? "mp4"}`;
@@ -176,6 +203,66 @@ export function ExportModal({
             </p>
           </div>
         )}
+
+        <PostCaption storyboard={storyboard} />
+
+        <details className="group rounded-lg border border-border">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2 text-xs font-medium text-muted-strong marker:hidden">
+            More downloads
+            <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="space-y-1 border-t border-border p-2">
+            <button
+              className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-xs text-foreground hover:bg-surface-2 disabled:opacity-50"
+              disabled={extra !== null || phase === "rendering"}
+              onClick={() =>
+                downloadExtra("silent", async () => {
+                  const res = await renderStoryboardVideo(storyboard, {
+                    maxDimension: 720,
+                    brand,
+                    includeAudio: false,
+                  });
+                  downloadBlob(res.blob, `${slugify(storyboard.title)}-video-only.${res.extension}`);
+                })
+              }
+            >
+              Video only (no music or voiceover)
+              <span className="text-muted">{extra === "silent" ? "Rendering…" : "Download"}</span>
+            </button>
+            {storyboard.musicUrl && (
+              <button
+                className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-xs text-foreground hover:bg-surface-2 disabled:opacity-50"
+                disabled={extra !== null}
+                onClick={() =>
+                  downloadExtra("music", () =>
+                    fetchAndSave(storyboard.musicUrl!, `${slugify(storyboard.title)}-music.mp3`),
+                  )
+                }
+              >
+                Background music
+                <span className="text-muted">{extra === "music" ? "Saving…" : "Download"}</span>
+              </button>
+            )}
+            {voiceovers.map(({ scene, n }) => (
+              <button
+                key={scene.id}
+                className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-xs text-foreground hover:bg-surface-2 disabled:opacity-50"
+                disabled={extra !== null}
+                onClick={() =>
+                  downloadExtra(scene.id, () =>
+                    fetchAndSave(
+                      scene.narrationUrl!,
+                      `${slugify(storyboard.title)}-voiceover-${n}.${scene.narrationUrl!.includes(".wav") ? "wav" : "mp3"}`,
+                    ),
+                  )
+                }
+              >
+                Voiceover · scene {n} ({scene.title})
+                <span className="text-muted">{extra === scene.id ? "Saving…" : "Download"}</span>
+              </button>
+            ))}
+          </div>
+        </details>
 
         {phase === "error" && (
           <div className="rounded-lg bg-danger/10 px-3 py-2 text-xs text-danger">{error}</div>

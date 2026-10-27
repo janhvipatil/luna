@@ -12,6 +12,7 @@ function row(overrides: Partial<StoryboardRow> = {}): StoryboardRow {
     format: "9:16",
     is_shared: false,
     music_url: null,
+    post_caption: null,
     scenes: [],
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-02T00:00:00Z",

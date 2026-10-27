@@ -43,6 +43,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      ideas: {
+        Row: {
+          created_at: string;
+          id: string;
+          source: string;
+          text: string;
+          updated_at: string;
+          used: boolean;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          source?: string;
+          text: string;
+          updated_at?: string;
+          used?: boolean;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          source?: string;
+          text?: string;
+          updated_at?: string;
+          used?: boolean;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       user_ai_settings: {
         Row: {
           created_at: string;
@@ -123,6 +153,7 @@ export type Database = {
           id: string;
           is_shared: boolean;
           music_url: string | null;
+          post_caption: string | null;
           scenes: Json;
           title: string;
           updated_at: string;
@@ -135,6 +166,7 @@ export type Database = {
           id?: string;
           is_shared?: boolean;
           music_url?: string | null;
+          post_caption?: string | null;
           scenes?: Json;
           title?: string;
           updated_at?: string;
@@ -147,6 +179,7 @@ export type Database = {
           id?: string;
           is_shared?: boolean;
           music_url?: string | null;
+          post_caption?: string | null;
           scenes?: Json;
           title?: string;
           updated_at?: string;

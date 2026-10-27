@@ -11,6 +11,8 @@ const STYLE_MODIFIERS: Record<VisualStyle, string> = {
     "professional food photography, macro close-up, appetizing, glistening textures, shallow depth of field, soft natural side light",
   "flat-lay":
     "overhead flat lay food photography, top-down, styled table spread, linen and ceramics, even soft daylight",
+  cartoon:
+    "playful 2D cartoon animation style, bold clean outlines, bright cheerful colours, cute expressive characters, charming and fun",
   "cozy-ambient":
     "warm cozy café interior, golden hour light through windows, candid, inviting atmosphere, lifestyle photography",
   cinematic: "cinematic still, dramatic lighting, shallow depth of field, film grain, 35mm",

@@ -61,3 +61,38 @@ export function draftFromTemplate({ brief, tone, venue }: DraftRequest): DraftSt
     ],
   };
 }
+
+/**
+ * Three distinct template concepts for "show me options": the sensory close-up
+ * cut, a behind-the-scenes cut, and a guest's-eye cut. User testing: owners
+ * wanted AI to "just make three ads to choose from".
+ */
+export function draftOptionsFromTemplate(req: DraftRequest): DraftStoryboard[] {
+  const base = draftFromTemplate(req);
+  const subject = req.brief.trim() || "our signature dish";
+  const v = venueTokens(req.venue);
+
+  const behindTheScenes: DraftStoryboard = {
+    title: "Behind the counter",
+    description: `The people and craft behind ${v.venue}: ${subject}`,
+    scenes: [
+      { title: "Early start", prompt: `Hands preparing ingredients at dawn in a ${v.vibe} ${v.type} kitchen, warm light, flour in the air`, script: "Before the doors open…", style: "cinematic", medium: "video", durationSec: 3 },
+      { title: "Craft", prompt: `Close-up of skilled hands making it with care — ${subject}`, script: "Everything made by hand, every day.", style: "food-closeup", medium: "video", durationSec: 4 },
+      { title: "The team", prompt: `The team smiling behind the counter of a ${v.vibe} ${v.type}, candid`, script: `Meet the people behind ${v.venue}.`, style: "photographic", medium: "image", durationSec: 3 },
+      { title: "Call to action", prompt: `Finished dish served across the counter to a happy guest — ${subject}`, script: "Come say hi — we'll have it ready.", style: "cozy-ambient", medium: "image", durationSec: 3 },
+    ],
+  };
+
+  const guestsEye: DraftStoryboard = {
+    title: "Through a guest's eyes",
+    description: `POV: a first visit to ${v.venue} for ${subject}`,
+    scenes: [
+      { title: "Walk in", prompt: `First-person view walking into a ${v.vibe} ${v.type}, morning light, bell above the door`, script: `POV: you finally tried ${v.venue}.`, style: "cozy-ambient", medium: "video", durationSec: 3 },
+      { title: "Order", prompt: `First-person view at the counter pointing at it in the display — ${subject}`, script: "You already know what you're getting.", style: "photographic", medium: "image", durationSec: 3 },
+      { title: "First bite", prompt: `First-person first bite or sip, slow motion — ${subject}`, script: "And now you get it.", style: "food-closeup", medium: "video", durationSec: 3 },
+      { title: "Call to action", prompt: `Friends laughing at a sunny table inside a ${v.vibe} ${v.type}`, script: "Tag who you're bringing next time.", style: "cozy-ambient", medium: "image", durationSec: 3 },
+    ],
+  };
+
+  return [{ ...base, title: "Up close" }, behindTheScenes, guestsEye];
+}
