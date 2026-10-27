@@ -14,6 +14,9 @@ const fs = require("fs");
 const BASE = process.env.BASE ?? "http://localhost:3000";
 const OUT = path.join(__dirname, "out");
 const ASSETS = __dirname;
+// The café's own photos for scenes 1 and 2 (override with DEMO_PHOTO_1/2).
+const PHOTO_1 = process.env.DEMO_PHOTO_1 ?? path.join(ASSETS, "maison-crumb-buns.jpg");
+const PHOTO_2 = process.env.DEMO_PHOTO_2 ?? PHOTO_1;
 const W = 1440, H = 900;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -134,7 +137,9 @@ async function click(page, locator, opts) {
   await tone.pressSequentially("cosy, mouth-watering", { delay: 40 });
   await sleep(500);
   await click(page, page.locator("button:has-text('Show me 3 ideas')"));
-  await page.waitForSelector("text=Use this one", { timeout: 30000 });
+  mark("draft_start");
+  await page.waitForSelector("text=Use this one", { timeout: 120000 });
+  mark("draft_done");
   await sleep(1200);
   const cards = page.locator("button:has-text('Use this one')");
   for (let i = 0; i < 3; i++) {
@@ -155,26 +160,47 @@ async function click(page, locator, opts) {
   await click(page, page.locator("button:has-text('frames')"));
   await sleep(800);
 
-  // Shot idea on scene 1
-  await caption(page, "One-tap shot ideas — no prompt writing needed");
-  await click(page, page.locator("button:has-text('+ Steam rising')"));
-  await sleep(1800);
+  // Shot idea on scene 1 (Gemini-drafted scenes vary, so take the first idea)
+  const shotIdea = page.locator("button:has-text('+ ')").first();
+  if (await shotIdea.count()) {
+    await caption(page, "One-tap shot ideas — no prompt writing needed");
+    await click(page, shotIdea);
+    await sleep(1800);
+  }
 
   // ── 4. Real food, not fake food ──────────────────────────────────────────
   await caption(page, "4 · Real food, not fake food — use a photo of your actual buns");
-  const seg2 = page.locator("button[title^='2.']").first();
-  await click(page, seg2);
-  await sleep(1000);
-  const uploadBtn = page.locator("button:has-text('Use a photo of your café')");
-  await moveTo(page, uploadBtn);
-  const [chooser] = await Promise.all([
-    page.waitForEvent("filechooser"),
-    (async () => { await page.mouse.down(); await sleep(80); await page.mouse.up(); })(),
-  ]);
-  await chooser.setFiles(path.join(ASSETS, "maison-crumb-buns.jpg"));
-  await page.waitForTimeout(4000);
-  await caption(page, "With a Gemini key, Veo animates this exact photo into the video clip");
-  await sleep(3000);
+  // Upload a real photo to a scene, switch it to Video and start generating.
+  async function photoToVideo(n, file) {
+    await click(page, page.locator(`button[title^='${n}.']`).first());
+    await sleep(900);
+    await moveTo(page, page.locator("button:has-text('Use a photo of your café')"));
+    const [chooser] = await Promise.all([
+      page.waitForEvent("filechooser"),
+      (async () => { await page.mouse.down(); await sleep(80); await page.mouse.up(); })(),
+    ]);
+    await chooser.setFiles(file);
+    await page.waitForTimeout(3500);
+    await click(page, page.locator("aside button:has-text('Video')"));
+    await sleep(600);
+    await click(page, page.locator("button:has-text('Regenerate scene'), button:has-text('Generate scene')").first());
+  }
+  await photoToVideo(1, PHOTO_1);
+  mark("gen1_start");
+  await caption(page, "Then Gemini Omni Flash animates that exact photo into a video clip");
+  await sleep(2500);
+  await caption(page, "Same for scene 2 — another photo from the counter");
+  await photoToVideo(2, PHOTO_2);
+  mark("gen2_start");
+  await page.waitForSelector("video[loop]", { timeout: 300000 });
+  mark("gen2_done");
+  await caption(page, "Real food, now moving — each clip generated in under a minute for about $0.40");
+  await sleep(6000);
+  await click(page, page.locator("button[title^='1.']").first());
+  await page.waitForSelector("video[loop]", { timeout: 300000 });
+  mark("gen1_done");
+  await caption(page, "Scene 1 — also a real AI clip, with natural sound");
+  await sleep(5000);
 
   // ── 5. Preview ───────────────────────────────────────────────────────────
   await caption(page, "5 · Preview the whole reel");
@@ -193,7 +219,7 @@ async function click(page, locator, opts) {
   await sleep(1500);
   await click(page, page.locator("button:has-text('Quick export')"));
   mark("export_start");
-  await page.waitForSelector("video[controls]", { timeout: 90000 });
+  await page.waitForSelector("video[autoplay][controls]", { timeout: 180000 });
   mark("export_done");
   await caption(page, "Done — a vertical reel and its caption, in minutes");
   await sleep(5000);
@@ -205,7 +231,7 @@ async function click(page, locator, opts) {
   await page.waitForTimeout(2000);
   await page.mouse.move(mouse.x, mouse.y);
   await page.locator("#gemini").scrollIntoViewIfNeeded();
-  await caption(page, "7 · Runs on the café's own Gemini key — drafts & voiceover free, Veo video at Google's price");
+  await caption(page, "7 · Runs on the café's own Gemini key — drafts & voiceover free, AI video at Google's price");
   await moveTo(page, page.locator("#gemini"));
   await sleep(4500);
   await caption(page, "");
