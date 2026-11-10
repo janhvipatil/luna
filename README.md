@@ -1,32 +1,57 @@
 # 🌙 Luna
 
-**Storyboard-first short-form content creation.**
+**Turn a simple idea and your own café photos into a short AI commercial.**
 
-Luna is the UI layer over the AI models you already use. Instead of building yet
-another video editor or training a model, Luna gives you a fast, polished
-workflow to **draft a storyboard, write the script, choose a look, and generate
-every scene** with the open-source backend of your choice.
+Luna is a storyboard-first tool for local cafés. Describe what you want to
+promote in a sentence, choose one of three drafted concepts, and Luna builds a
+shot-by-shot storyboard that you can review, regenerate and export as a branded
+vertical video, with a ready-to-post caption. You don't need to write prompts,
+edit video or know anything about AI models.
 
-The bet: the models are commoditized — the missing piece is a delightful,
-opinionated interface that turns them into a real creative tool. That interface
-is the whole product.
+Luna was built as the high-fidelity prototype for **DH2655 Cooperative
+IT-design at KTH Royal Institute of Technology (autumn 2026)** by Group Luna:
+Alicia Nordström, Yihuan Ma, Weining Yan and Janhvi Patil. The design comes
+from market research, a competitor analysis, expert interviews and user testing
+with peers and three Stockholm cafés.
+
+- 🎬 **Demo video:** [`docs/luna-demo.mp4`](docs/luna-demo.mp4), a narrated
+  2.5-minute walkthrough
+- 🌐 **Live prototype:** <https://luna-henna-theta.vercel.app>
+
+![The Luna storyboard editor](docs/screenshot-editor.png)
 
 ---
 
-## What's in the box
+## Features
 
-- **Dashboard** — a library of your storyboards plus starter templates
-  (Product Launch, Founder Story, 60-Second Explainer).
-- **Storyboard editor** — a scene-by-scene canvas with:
-  - drag-to-reorder timeline,
-  - per-scene visual prompt, script/caption, look, output type (image/video),
-    and duration,
-  - live preview with the script rendered as an on-screen caption,
-  - one-click **Generate scene** and **Generate all**.
-- **Pluggable generation backends** — swap the model without touching the UI.
-- **Accounts & sync** — email/password auth via Supabase; each user's
-  storyboards are persisted per-user in Postgres with row-level security, plus a
-  profile section and a members directory.
+Each feature traces back to something we heard in research or testing.
+
+- **About your café & brand look.** Venue name, signature item,
+  neighbourhood and vibe, plus logo, colours and caption font. Set them once and
+  Luna reuses them in every commercial, including the branded end card.
+- **Café templates.** 30 starter storyboards in five categories (menu & dishes,
+  offers & promos, behind the scenes, events & seasons, social & reviews), with
+  your café's details filled in automatically.
+- **Draft with AI: three options.** Describe the ad in one or two sentences
+  and Luna drafts three distinct concepts to choose from. (A café owner asked
+  for "just three ads to choose from".)
+- **Storyboard editor.** A timeline showing each scene's length and the total,
+  drag-to-reorder, and a Script view with every scene's exact caption and
+  voiceover. Each scene can be generated and regenerated on its own, and
+  earlier takes are kept.
+- **Use a photo of your café.** Animate your own photos into video clips so
+  the ad shows your real food and space. There's also a *Cartoon* look for
+  playful ads that don't try to look real.
+- **Voiceover & music.** Text-to-speech per scene (scene length adapts to the
+  narration) plus a background track.
+- **Export.** Server-side FFmpeg render to MP4 in 9:16, 4:5, 1:1 or 16:9, an
+  AI-written *Caption for your post*, and extra downloads under "More
+  downloads".
+- **Idea bank.** Type or dictate ad ideas whenever they come up. AI groups
+  them into themes, and any idea can become a storyboard in one click.
+- **Accounts, sharing & privacy.** Supabase auth, per-user storage with
+  row-level security, and public share links. Each café brings its own Gemini
+  key, which is encrypted at rest (AES-256-GCM).
 
 ---
 
@@ -83,14 +108,19 @@ npm start
 
 ## Connecting a real backend
 
-Luna ships with four providers (see [`src/lib/providers`](src/lib/providers)):
+Luna ships with these providers (see [`src/lib/providers`](src/lib/providers)):
 
-| Provider          | Kind                         | Configure with                          |
-| ----------------- | ---------------------------- | --------------------------------------- |
-| **Google Veo 3.1 Fast** | Video (text/image-to-video, native audio) | `GEMINI_API_KEY`         |
-| **Luna Preview**  | Built-in: matched stock food photos | _nothing — always on_            |
-| **Replicate**     | Hosted open models           | `REPLICATE_API_TOKEN`                   |
-| **ComfyUI**       | Self-hosted node-graph engine| `COMFYUI_URL` (+ a workflow)            |
+| Provider                | Kind                                        | Configure with                                   |
+| ----------------------- | ------------------------------------------- | ------------------------------------------------ |
+| **Gemini Omni Flash**   | Video (default; photo-to-video)             | User's own Gemini key (Profile → Gemini)         |
+| **Google Veo 3.1 Fast** | Video (text/image-to-video, native audio)   | User's own Gemini key                            |
+| **Gemini images**       | Images (Nano Banana)                        | User's own Gemini key                            |
+| **Luna Preview**        | Built-in: matched stock food photos         | _nothing (always on)_                            |
+| **Replicate**           | Hosted open models                          | `REPLICATE_API_TOKEN`                            |
+| **ComfyUI**             | Self-hosted node-graph engine               | `COMFYUI_URL` (+ a workflow)                     |
+
+Gemini keys are stored per user, encrypted with `APP_ENCRYPTION_KEY`
+(see `.env.example`).
 
 1. Copy `.env.example` to `.env.local` and fill in the keys for the backend you
    want.
@@ -126,33 +156,46 @@ prompts across every backend.
 ```
 src/
   app/
-    page.tsx                 Dashboard (storyboard library)
-    storyboard/[id]/page.tsx Editor route
-    api/generate/route.ts    Generation endpoint → provider layer
-    api/providers/route.ts   Provider metadata (server-computed config status)
-  components/
-    dashboard/               Library, templates, new-storyboard flow
-    editor/                  Preview, inspector, drag-sortable timeline
-    providers/               Backend picker + status chip
-    ui/                      Design-system primitives
+    (app)/                   Dashboard, storyboard editor, idea bank, profile
+    (auth)/                  Login & sign-up
+    (marketing)/             Welcome, pricing, privacy, terms
+    api/draft                AI storyboard drafting (three options)
+    api/generate             Generation endpoint → provider layer (+ jobs)
+    api/narrate, api/caption Voiceover (TTS) and post captions
+    api/render               Server-side FFmpeg export
+    api/ideas/organize       Idea bank → themes
+    share/[id]               Public share page
+  components/                Dashboard, editor, ideas, profile, providers, ui
   lib/
-    store.ts                 Zustand + localStorage (all app state)
     providers/               Pluggable generation backends
-    types.ts, constants.ts   Domain model + presets/templates
+    draft/, narrate/         Gemini / Claude drafting and TTS
+    templates.ts, venue.ts   Café templates filled from the venue profile
+    store.ts, data/          Zustand store synced to Supabase
+supabase/migrations/         Schema + row-level-security policies
+scripts/demo/                Playwright script that recorded the demo video
 ```
 
-**Data flow:** the client store holds storyboards and the chosen provider id. A
+**Data flow:** the client store holds storyboards and syncs them to Supabase. A
 generate action calls `/api/generate`, which resolves the right provider on the
-server (honoring your choice, falling back to a configured one, and finally to
-the always-available preview), runs it, and returns a normalized asset that the
-store writes back onto the scene.
+server (your choice, then a configured one, then the always-available
+preview). Long video jobs are tracked in a `generation_jobs` table so they
+survive reloads, and the finished asset is written back onto the scene.
 
 ---
 
-## Roadmap ideas
+## Course report
 
-- Timeline assembly / export (stitch scenes into a single clip via an existing
-  open tool like ffmpeg or Remotion).
-- Cloud sync + sharing (the store is already isolated behind a clean interface).
-- Per-scene variations and a "pick the best" gallery.
-- Voiceover generation as another provider capability.
+The project report (process, research, user evaluation and discussion)
+describes how each design decision was motivated. Luna is a course prototype:
+billing is not wired up, and the high-fidelity version has not yet been
+evaluated with cafés.
+
+## Roadmap
+
+- Hosted generation so cafés don't need their own API key.
+- Test the high-fidelity prototype with more cafés, and compare realistic and
+  cartoon looks.
+- Direct publishing to Instagram and TikTok, and analytics-based suggestions
+  for posting time, length and music.
+- Expand to bakeries, restaurants and salons, with seasonal campaigns and ads
+  in any language.
